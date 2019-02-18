@@ -2,12 +2,11 @@
 //todo switch all arrays in table function to ArrayList at first oppertunity
 
 import javax.swing.*;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.Formatter;
+import java.util.*;
 
 public class Table {
     private int rows;  //rows of data (+1 to include column row & +1 to include columns letters)
@@ -17,7 +16,7 @@ public class Table {
     private int oldRows;    //used for maintanance
     private int oldColumns; //used for maintanance
     private boolean hasColumns;
-    private String[][] tableData;
+    private ArrayList<String[]> tableData; //2d string array //String[] represents a row of data, ArrayList<String[]> represents a table of data
     private int numDecPlaces = 2;
 
     public Table(String[] columnData) {
@@ -26,7 +25,8 @@ public class Table {
         setHasColumns(true);
 
         this.tableData = newTable();
-        this.tableData[0] = genTable(columnData);  //first row (0th index) is column data ([0][0] is "Row#")
+        ArrayList<String> columns = new ArrayList<String>(Arrays.asList(columnData));
+        this.tableData.set(0,genTableHeader(columnData));  //first row (0th index) is column data ([0][0] is "Row#")
     }
 
     public Table(Class<?> C) {
@@ -35,16 +35,16 @@ public class Table {
         setHasColumns(false);
 
         this.tableData = newTable();
-        this.tableData[0] = genTable(genColumns(C));
+        this.tableData.add(genTableHeader(genColumns(C)));
     }
 
     public void clear() {
         setRows(0); //clear rows
         this.oldRows = 0;
-        String[] columnBackup = new String[getActCol() - 1];
-        System.arraycopy(getTableData()[0], 1, columnBackup, 0, getActCol() - 1);
+        String[] columnBackup = new String[getActCol() - 1]; //first element of ArrList is column headers String[]
+        System.arraycopy(getTableData().get(0), 1,columnBackup,0, getActCol() - 1);
         this.tableData = newTable(); //clear rows
-        this.tableData[0] = genTable(columnBackup);
+        this.tableData.add(genTableHeader(columnBackup));
     }
 
     public void printTable(String title) {
@@ -57,7 +57,7 @@ public class Table {
         String[] seperators = buildSep(colLengths);
 
         for (int rowNum = 0; rowNum < getActRow(); rowNum++) {    //i counts rows (0th row is column names)
-            getTableData()[rowNum][0] = (rowNum != 0 ? String.valueOf(rowNum) : "Row#"); //row number
+            getTableData().get(rowNum)[0] = (rowNum != 0 ? String.valueOf(rowNum) : "Row#"); //row number
             printRow(rowNum, colLengths, seperators);
         }
         pad(1);
@@ -71,14 +71,12 @@ public class Table {
         Formatter frmtr = new Formatter(row);
 
         for (int col = 0; col < colLengths.length; col++) { //col counts columns (0th column is first logical column)
-            String cell = getTableData()[rowNum][col];
-            String colName = getTableData()[0][col];
+            String cell = getTableData().get(rowNum)[col];
+            String colName = getTableData().get(0)[col];
 
-            //cell = col != 0 ? (isNumber(cell) ? fpNotToReg(cell) : cell) : cell;  //column zero is row numbers, no rounding necessary
             int indq = colName.indexOf('q');
             int indQ = colName.indexOf('Q');
             cell = (indQ + indq > -2 ? cell : (col != 0 ? (isNumber(cell) ? fpNotToReg(cell) : cell) : cell));
-//            cell = (col != 0) || !(indQ + indq > -2) ? (isNumber(cell) ? fpNotToReg(cell) : cell) : cell;
 
             frmtr.format("|%-" + colLengths[col] + "s", cell);
         }
@@ -103,7 +101,7 @@ public class Table {
 
         int col = findColumnIndex(columnName);
         for (int rowNum = 0; rowNum < getActRow(); rowNum++) {    //i counts rows (0th row is column names)
-            frmtr.format("|%-" + findColumnLengths()[col] + "s|", getTableData()[rowNum][col]);
+            frmtr.format("|%-" + findColumnLengths()[col] + "s|", getTableData().get(rowNum)[col]);
             print(row.toString());
         }
     }
@@ -111,7 +109,12 @@ public class Table {
     private int findColumnIndex(String columnName) {
         boolean found = false;
         for (int col = 0; col < getActCol(); col++) {
-            if (getTableData()[0][col].equalsIgnoreCase(columnName)) {
+            print("ActCol: " + getActCol());
+//            print("First row: " + getTableData().get(0));
+            if (getTableData().get(0).equals(null)){
+                print("get(0) is null");
+            }
+            if (getTableData().get(0)[col].equalsIgnoreCase(columnName)) {
                 found = true;
                 return col;
             }
@@ -136,8 +139,8 @@ public class Table {
                 for (int row = 1; row < getRows() - pass; row++) {
                     int nextRow = row + 1;
 
-                    String s1 = getTableData()[row][colIndex];
-                    String s2 = getTableData()[nextRow][colIndex];
+                    String s1 = getTableData().get(row)[colIndex];
+                    String s2 = getTableData().get(nextRow)[colIndex];
 
                     changed = compare(s1, s2, row, nextRow);
                 }
@@ -165,8 +168,6 @@ public class Table {
         while (cont) {
             cont = false;
             if (d1 < d2) {
-//                print("i = " + i + " : double " + d1 + " < " + d2);
-//                print("Switching " + d1 + " with " + d2);
                 return swap(row, nextRow);
             }
         }
@@ -174,9 +175,10 @@ public class Table {
     }
 
     private boolean swap(int row, int nextRow) {
-        String[] temp = getTableData()[row];
-        getTableData()[row] = getTableData()[nextRow];
-        getTableData()[nextRow] = temp;
+        String[] temp = getTableData().get(row);
+//        getTableData().get(row] = getTableData().get(nextRow];
+        getTableData().set(row,getTableData().get(nextRow));
+        getTableData().set(nextRow, temp);
         return true;
     }
 
@@ -185,30 +187,24 @@ public class Table {
         boolean cont = true;
         while (cont) {
             cont = false;
-            //for (int i = 0; i < Math.min(t1.length(), t2.length()); i++) {
             if (t1.charAt(i) > t2.charAt(i)) {
-//                print("i = " + i + " : char " + t1.toLowerCase().charAt(i) + "(" + t1.toLowerCase().codePointAt(i) + ") > " + t2.toLowerCase().charAt(i) + "(" + t2.toLowerCase().codePointAt(i) + ")");
-//                print("Switching " + t1 + " with " + t2);
                 return swap(row, nextRow);
             } else if (t1.charAt(i) == t2.charAt(i)) {
                 cont = true;
                 i++;
-//                print("i = " + i + " : char " + t1.toLowerCase().charAt(i) + "(" + t1.toLowerCase().codePointAt(i) + ") < " + t2.toLowerCase().charAt(i) + "(" + t2.toLowerCase().codePointAt(i) + ")");
             }
         }
         return false;
     }
 
     public boolean checkForItem(String searchKey, String searchColumn) {
-//        print("checkForItem called...");
         boolean found = false;
         int col = findColumnIndex(searchColumn);
 
         for (int row = 1; row < getActRow(); row++) {
-            String cell = getTableData()[row][col];
+            String cell = getTableData().get(row)[col];
             if (cell.equalsIgnoreCase(searchKey)) {
                 found = true;
-                //print("Item found " + cell);
                 break;
             }
         }
@@ -216,20 +212,17 @@ public class Table {
     }
 
     public String lookupCell(String searchKey, String searchColumn, String returnColumn) {
-//        print("lookupCell called...");
         boolean found = false;
         String returnCell = "";
         int col = findColumnIndex(searchColumn);
 
         for (int row = 1; row < getActRow(); row++) {
-            String cell = getTableData()[row][col];
+            String cell = getTableData().get(row)[col];
             if (cell.equalsIgnoreCase(searchKey)) {
                 found = true;
 
-                String data = getTableData()[row][findColumnIndex(returnColumn)];
+                String data = getTableData().get(row)[findColumnIndex(returnColumn)];
                 returnCell = (isNumber(data) ? roundD(data) : data);
-
-//                print("Item found " + cell + ". Data returned: " + returnCell);
                 break;
             }
         }
@@ -253,15 +246,15 @@ public class Table {
 
     public boolean addRow(String[] rowData) {
         //go to end of table using oldRows&oldColumns, add data there
-//        print("addRow called");
         if (rowData.length != getColumns()) {
             JOptionPane.showMessageDialog(null, "Error: rows must contain same number of columns as table. This table has " /*+ getColumns() + " columns. You provided " + rowData.length*/);
             return false;
         }
 
         resizeTable();
-        getTableData()[oldRows][0] = ""; //row number column
-        System.arraycopy(rowData, 0, getTableData()[oldRows], 1, rowData.length);
+//        getTableData().get(oldRows][0] = ""; //row number column
+//        System.arraycopy(rowData, 0, getTableData().get(oldRows], 1, rowData.length);
+
         return true;
     }
 
@@ -279,11 +272,11 @@ public class Table {
     private int[] findColumnLengths() {
         int[] widths = new int[getActCol()];
 
-        String[][] temp = getTableData().clone();
+//        String[][] temp = getTableData().clone();
 
         for (int col = 0; col < getActCol(); col++) {
             for (int row = 0; row < getActRow(); row++) {
-                String cell = getTableData()[row][col];
+                String cell = getTableData().get(row)[col];
                 int dec = cell.indexOf('.'); // if string contains '.' its a decimal point which is rounded to two places in my algo
                 String trueL = dec != -1 ? cell.substring(0, dec + ((dec + numDecPlaces < cell.length() ? numDecPlaces + 1 : numDecPlaces))) : cell;
                 trueL = isNumber(cell) ? fpNotToReg(cell) : cell;
@@ -337,7 +330,7 @@ public class Table {
         return roundedNum.toString();
     }
 
-    private String[] genTable(String[] userColumns) {
+    private String[] genTableHeader(String[] userColumns) {
         int newArrSize = getActCol();
         String[] tableColumns = new String[newArrSize];
 
@@ -352,15 +345,14 @@ public class Table {
         updOldData();
         setRows(getRows() + 1); //increment row counters for new data
 
-        String[][] newTable = newTable(); //create new larger table
-        System.arraycopy(getTableData(), 0, newTable, 0, tableData.length);
+        ArrayList<String[]> newTable = newTable(); //create new larger table
+//        System.arraycopy(getTableData(), 0, newTable, 0, tableData.length);
 
         this.tableData = newTable;
     }
 
-    private String[][] newTable() {
-        String[][] tableData = new String[this.actRow][this.actCol];
-        return tableData;
+    private ArrayList<String[]> newTable() {
+        return new ArrayList<String[]>();
     }
 
     private void calcCentre(int[] colLengths) {
@@ -408,7 +400,7 @@ public class Table {
         return actRow;
     }
 
-    protected String[][] getTableData() {
+    protected ArrayList<String[]> getTableData() {
         if (this.tableData != null) {
             return this.tableData;
         }
