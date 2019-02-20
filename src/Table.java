@@ -2,7 +2,6 @@
 //todo switch all arrays in table function to ArrayList at first oppertunity
 
 import javax.swing.*;
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -25,8 +24,7 @@ public class Table {
         setHasColumns(true);
 
         this.tableData = newTable();
-        ArrayList<String> columns = new ArrayList<String>(Arrays.asList(columnData));
-        this.tableData.set(0,genTableHeader(columnData));  //first row (0th index) is column data ([0][0] is "Row#")
+        this.tableData.set(0, genTableHeader(columnData));  //first row (0th index) is column data ([0][0] is "Row#")
     }
 
     public Table(Class<?> C) {
@@ -42,9 +40,11 @@ public class Table {
         setRows(0); //clear rows
         this.oldRows = 0;
         String[] columnBackup = new String[getActCol() - 1]; //first element of ArrList is column headers String[]
-        System.arraycopy(getTableData().get(0), 1,columnBackup,0, getActCol() - 1);
+        System.arraycopy(getTableData().get(0), 1, columnBackup, 0, getActCol() - 1);
         this.tableData = newTable(); //clear rows
         this.tableData.add(genTableHeader(columnBackup));
+//        System.out.println(Arrays.toString(getTableData().get(0)));
+//        throw new Error();
     }
 
     public void printTable(String title) {
@@ -109,11 +109,7 @@ public class Table {
     private int findColumnIndex(String columnName) {
         boolean found = false;
         for (int col = 0; col < getActCol(); col++) {
-            print("ActCol: " + getActCol());
 //            print("First row: " + getTableData().get(0));
-            if (getTableData().get(0).equals(null)){
-                print("get(0) is null");
-            }
             if (getTableData().get(0)[col].equalsIgnoreCase(columnName)) {
                 found = true;
                 return col;
@@ -176,8 +172,8 @@ public class Table {
 
     private boolean swap(int row, int nextRow) {
         String[] temp = getTableData().get(row);
-//        getTableData().get(row] = getTableData().get(nextRow];
-        getTableData().set(row,getTableData().get(nextRow));
+//        getTableData().get(row) = getTableData().get(nextRow);
+        getTableData().set(row, getTableData().get(nextRow));
         getTableData().set(nextRow, temp);
         return true;
     }
@@ -246,14 +242,21 @@ public class Table {
 
     public boolean addRow(String[] rowData) {
         //go to end of table using oldRows&oldColumns, add data there
+        print("addRow");
         if (rowData.length != getColumns()) {
             JOptionPane.showMessageDialog(null, "Error: rows must contain same number of columns as table. This table has " /*+ getColumns() + " columns. You provided " + rowData.length*/);
             return false;
         }
 
-        resizeTable();
-//        getTableData().get(oldRows][0] = ""; //row number column
-//        System.arraycopy(rowData, 0, getTableData().get(oldRows], 1, rowData.length);
+        updOldData();
+        setRows(getRows() + 1); //increment row counters for new data
+        getTableData().add(rowData);
+
+        print("Row added successfully");
+//        resizeTable();
+//        getTableData().get(oldRows)[0] = ""; //row number column
+//        System.arraycopy(rowData, 0, getTableData().get(oldRows), 1, rowData.length);
+
 
         return true;
     }
@@ -341,15 +344,15 @@ public class Table {
         return tableColumns;
     }
 
-    private void resizeTable() {  //add row to table
-        updOldData();
-        setRows(getRows() + 1); //increment row counters for new data
-
-        ArrayList<String[]> newTable = newTable(); //create new larger table
-//        System.arraycopy(getTableData(), 0, newTable, 0, tableData.length);
-
-        this.tableData = newTable;
-    }
+//    private void resizeTable() {  //add row to table
+//        print("resizeTable called");
+//
+//
+//        ArrayList<String[]> newTable = newTable(); //create new larger table
+////        System.arraycopy(getTableData(), 0, newTable, 0, tableData.length);
+//
+//        this.tableData = newTable;
+//    }
 
     private ArrayList<String[]> newTable() {
         return new ArrayList<String[]>();
@@ -401,13 +404,16 @@ public class Table {
     }
 
     protected ArrayList<String[]> getTableData() {
-        if (this.tableData != null) {
+        if (!this.tableData.isEmpty()/* != null*/) {
+//            print("returned arraylist");
             return this.tableData;
         }
+        print("returned null");
         return null;
     }
 
     protected int getRows() {
+        print("getRows: " + this.rows);
         return this.rows;
     }
 

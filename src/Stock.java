@@ -32,7 +32,7 @@ public class Stock {
 
     public boolean updateStock(double price, double open, double high, double low) {
         if ((low >= high) || (low > price) || (price > high)) {
-//            System.out.println("updateStock: numbers dont make sense...");
+            System.out.println("updateStock: numbers dont make sense...");
             return false;
         }
         this._price = price;

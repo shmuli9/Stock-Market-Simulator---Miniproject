@@ -15,7 +15,7 @@ class SimData {
         try {
             setPortfolio(new Portfolio());
             setMarket(new Market());
-            genRandomStocks(4);
+            genRandomStocks(1);
         } catch (ClassNotFoundException e) {
             print(e.toString());
         }
@@ -28,6 +28,7 @@ class SimData {
         int randomI = randomWork(StockNames.length);
 
         while (getMarket().getRows() < numStocks) {
+//            print("genRandomStocks loop");
             addRandomStocks(StockNames[randomI], StockSymbols[randomI]);
             randomI = randomWork(StockNames.length);
         }
@@ -39,6 +40,7 @@ class SimData {
         boolean success = false;
         int i = 0;
         while(!success){
+            print("addRandomStocks loop");
             price = randomWork(500, 1500);
             open = randomWork(500, 1500);
             high = randomWork(500, 1500);
@@ -59,6 +61,7 @@ class SimData {
                 open = randomWork(500, 1500);
                 high = randomWork(500, 1500);
                 low = randomWork(500, 1500);
+                print("updRandomStocks");
                 success = getMarket().updStock(s.getSymbol(), price, open, high, low);
             }
         }

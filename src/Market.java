@@ -28,6 +28,7 @@ class Market extends Table {
      * @return status, true = success, false = failure
      */
     public boolean addStock(String name, String symbol, double price, double open, double high, double low, int numShares) {
+        System.out.println("addStock:");
         if (getStocks() != null) {
             if (!checkForItem(symbol, "Symbol")) {  //if this stock hasnt been added, add now
                 Stock stock = new Stock(name, symbol, numShares);
@@ -61,6 +62,7 @@ class Market extends Table {
      * @return status
      */
     public boolean updStock(String symbol, double price, double open, double high, double low) {
+        System.out.println("updStock:");
         if (getStocks() != null) {
             if (checkForItem(symbol, "Symbol")) {  //if this stock already exists then update info for it
                 boolean success = findStocks(symbol).updateStock(price, open, high, low);
@@ -77,6 +79,7 @@ class Market extends Table {
     private void updateTableData() {
         super.clear();
         for (Stock stock : getStocks()) {
+//            System.out.print("updateTableData called ");
             addRow(stock.toStringArr());
         }
     }
