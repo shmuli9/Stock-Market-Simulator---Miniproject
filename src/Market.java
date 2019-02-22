@@ -78,8 +78,9 @@ class Market extends Table {
 
     private void updateTableData() {
         super.clear();
+        System.out.println("updateTabelData called");
         for (Stock stock : getStocks()) {
-//            System.out.print("updateTableData called ");
+            System.out.print("updateTableData looping ");
             addRow(stock.toStringArr());
         }
     }

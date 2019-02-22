@@ -10,6 +10,7 @@ public class StockMarket {
 
     public static void main(String[] args) {
         menu();
+//        TEST();
 
         print("Goodbye!");
 
@@ -17,6 +18,17 @@ public class StockMarket {
         //setupStocks();
         //setupPortfol();
         //TESTS();
+    }
+
+    public static void TEST() {
+        try {
+            Table table = new Table(Class.forName(Stock.class.getName()));
+            String[] row = {"Apple", "AAPL", "1","1","1","1","1"};
+            table.addRow(row);
+            print(String.valueOf(table.checkForItem("AAPL", "Symbol")));
+        } catch (ClassNotFoundException e){
+
+        }
     }
 
     public static void menu() {
@@ -56,12 +68,12 @@ public class StockMarket {
         String inp = "";
         String sortPref = "Market Cap";
 
-        while(!inp.equals("q")){
+        while (!inp.equals("q")) {
             sim.getMarket().sortTable(sortPref);
             printTable(sim.getMarket());
             //sim.getMarket().printTable();
-            inp = SM.printOptions("Options:\nTo refresh stock prices type R\nTo sort, type S",valid, "q");
-            switch (inp){
+            inp = SM.printOptions("Options:\nTo refresh stock prices type R\nTo sort, type S", valid, "q");
+            switch (inp) {
                 case "r":
                     sim.updRandomStocks();
                     break;
@@ -69,7 +81,7 @@ public class StockMarket {
                     sortPref = SM.prompt("Please enter a column to sort by:", STR);
                     while (!sim.getMarket().sortTable(sortPref)) {
                         sortPref = SM.prompt("Please enter a column to sort by:", STR);
-                        if (sortPref.equals("q")){
+                        if (sortPref.equals("q")) {
                             return "q";
                         }
                     }
@@ -88,7 +100,7 @@ public class StockMarket {
         String[] options = {"Buy", "Sell", "Ledger", "Menu"};
         String input = "";
 
-        while (!input.equals("q")){
+        while (!input.equals("q")) {
             printTable(sim.getPortfolio());
             //sim.getPortfolio().printTable(/*sim.getPlayerName() + "'s portfolio"*/);
             input = SM.printOptions("What would you like to do?", options, "q");
@@ -133,7 +145,7 @@ public class StockMarket {
 
     public static void buy(Scanner in, SimData sim) {
         String sym /*= in.nextLine()*/;
-        sym = SM. prompt("Enter the stock symbol that you would like to purchase:", STR);
+        sym = SM.prompt("Enter the stock symbol that you would like to purchase:", STR);
 
         while (!Market.searchStocks(sym)) {
             sym = SM.prompt("Stock symbol not found\nEnter the stock symbol that you would like to purchase:", STR);
@@ -142,11 +154,11 @@ public class StockMarket {
         String tprice = sim.getMarket().lookupCell(sym, "Symbol", "Price");
         print("Stock " + sym + " found, price per share: " + tprice);
         int qty;
-        qty = Integer.parseInt(SM.prompt("Please enter quantity of this stock that you would like to buy",INT));
+        qty = Integer.parseInt(SM.prompt("Please enter quantity of this stock that you would like to buy", INT));
 
         String totalPurchPrice = roundD(Double.parseDouble(tprice) * qty);
 
-        String inp = SM.prompt("Total purchase will be " + totalPurchPrice + "\nTo confirm type y",STR);
+        String inp = SM.prompt("Total purchase will be " + totalPurchPrice + "\nTo confirm type y", STR);
 
         if (!inp.equals("y")) {
             print("OK, purchase cancelled");
@@ -177,20 +189,20 @@ public class StockMarket {
         sym = SM.prompt("Enter the stock symbol that you would like to sell:", STR);
         String input = sym;
 
-        while(!sim.getPortfolio().checkForItem(sym, "Symbol")){
+        while (!sim.getPortfolio().checkForItem(sym, "Symbol")) {
             sym = SM.prompt("You do not own shares with symbol: " + sym + "\nEnter the stock symbol of the holding you would like to sell: ", STR);
         }
 
         double amt = Double.parseDouble(sim.getPortfolio().lookupCell(sym, "Symbol", "Quantity"));
         int amt2sell = Integer.parseInt(SM.prompt("You own " + amt + " shares of this stock. How many would you like to sell?", INT));
 
-        while (amt2sell > amt || amt2sell < 1){
+        while (amt2sell > amt || amt2sell < 1) {
             amt2sell = Integer.parseInt(SM.prompt("Please enter an amount, between 1 and " + amt, INT));
         }
 
         double salePrice = Market.findStocks(sym).getPrice();
 
-        String inp = SM.prompt("Total sale will net " + roundD(salePrice * amt2sell) + "\nTo confirm type y",STR);
+        String inp = SM.prompt("Total sale will net " + roundD(salePrice * amt2sell) + "\nTo confirm type y", STR);
 
         if (!inp.equals("y")) {
             print("OK, sale executed");
@@ -269,7 +281,7 @@ public class StockMarket {
         return randomNumber;
     }
 
-    public static void printTable(Table t){
+    public static void printTable(Table t) {
         t.printTable();
     }
 }

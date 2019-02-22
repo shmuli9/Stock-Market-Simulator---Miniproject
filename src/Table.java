@@ -21,7 +21,7 @@ public class Table {
     public Table(String[] columnData) {
         setRows(0);
         setColumns(columnData.length);
-        setHasColumns(true);
+//        setHasColumns(true);
 
         this.tableData = newTable();
         this.tableData.set(0, genTableHeader(columnData));  //first row (0th index) is column data ([0][0] is "Row#")
@@ -30,7 +30,7 @@ public class Table {
     public Table(Class<?> C) {
         setRows(0);
         setColumns(genColumns(C).length);
-        setHasColumns(false);
+//        setHasColumns(false);
 
         this.tableData = newTable();
         this.tableData.add(genTableHeader(genColumns(C)));
@@ -108,10 +108,12 @@ public class Table {
 
     private int findColumnIndex(String columnName) {
         boolean found = false;
+        print("Finding column index for: " + columnName);
+//        print(getTableData().get(0)[1]);
         for (int col = 0; col < getActCol(); col++) {
-//            print("First row: " + getTableData().get(0));
             if (getTableData().get(0)[col].equalsIgnoreCase(columnName)) {
                 found = true;
+                print(String.valueOf(col));
                 return col;
             }
         }
@@ -196,14 +198,18 @@ public class Table {
     public boolean checkForItem(String searchKey, String searchColumn) {
         boolean found = false;
         int col = findColumnIndex(searchColumn);
-
+        print("Searching for: " + searchKey + ", in col: " + col);
+        print(getTableData().get(1)[1]);
+//        printTable();
         for (int row = 1; row < getActRow(); row++) {
             String cell = getTableData().get(row)[col];
+            print(cell);
             if (cell.equalsIgnoreCase(searchKey)) {
                 found = true;
                 break;
             }
         }
+        print("Search " + found + "!");
         return found;
     }
 
@@ -250,7 +256,10 @@ public class Table {
 
         updOldData();
         setRows(getRows() + 1); //increment row counters for new data
-        getTableData().add(rowData);
+        String[] rowToAdd = new String[rowData.length+1];
+        rowToAdd[0]="";
+        System.arraycopy(rowData, 0, rowToAdd, 1, rowData.length);
+        getTableData().add(rowToAdd);
 
         print("Row added successfully");
 //        resizeTable();
@@ -279,6 +288,7 @@ public class Table {
 
         for (int col = 0; col < getActCol(); col++) {
             for (int row = 0; row < getActRow(); row++) {
+                print("col: " + col);
                 String cell = getTableData().get(row)[col];
                 int dec = cell.indexOf('.'); // if string contains '.' its a decimal point which is rounded to two places in my algo
                 String trueL = dec != -1 ? cell.substring(0, dec + ((dec + numDecPlaces < cell.length() ? numDecPlaces + 1 : numDecPlaces))) : cell;

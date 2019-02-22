@@ -15,7 +15,7 @@ class SimData {
         try {
             setPortfolio(new Portfolio());
             setMarket(new Market());
-            genRandomStocks(1);
+            genRandomStocks(4);
         } catch (ClassNotFoundException e) {
             print(e.toString());
         }
