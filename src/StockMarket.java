@@ -20,17 +20,6 @@ public class StockMarket {
         //TESTS();
     }
 
-    public static void TEST() {
-        try {
-            Table table = new Table(Class.forName(Stock.class.getName()));
-            String[] row = {"Apple", "AAPL", "1","1","1","1","1"};
-            table.addRow(row);
-            print(String.valueOf(table.checkForItem("AAPL", "Symbol")));
-        } catch (ClassNotFoundException e){
-
-        }
-    }
-
     public static void menu() {
         Scanner in = new Scanner(System.in);
         String input;

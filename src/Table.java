@@ -24,7 +24,7 @@ public class Table {
 //        setHasColumns(true);
 
         this.tableData = newTable();
-        this.tableData.set(0, genTableHeader(columnData));  //first row (0th index) is column data ([0][0] is "Row#")
+        this.tableData.add(genTableHeader(columnData));  //first row (0th index) is column data ([0][0] is "Row#")
     }
 
     public Table(Class<?> C) {
