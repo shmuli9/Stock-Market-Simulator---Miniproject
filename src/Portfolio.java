@@ -19,12 +19,12 @@ class Portfolio extends Table {
         setLedger(new Ledger());
     }
 
-    public void updateTableData() {
-        super.clear();
-        for (Holding holding : holdings()) {
-            addRow(holding.toStringArr());
-        }
-    }
+//    public void updateTableData() {
+//        clear();
+//        for (Holding holding : holdings()) {
+//            addRow(holding.toStringArr());
+//        }
+//    }
 
     /***
      * Buy stock, add to portfolio if not already there and  update if already owned
@@ -51,7 +51,7 @@ class Portfolio extends Table {
                 resizeArray(1)[0] = new Holding(stockSym, stockPrice, quantity);
             }
             getLedger().addTrade(stockSym, quantity, stockPrice, true);
-            updateTableData();
+            updateTableData(holdings());
             return true;
         } else {
             print("Please enter a quantity greater than 0.");
@@ -73,12 +73,12 @@ class Portfolio extends Table {
             if (quantity < currQty) {
                 thisHolding.update(currprice, -quantity); //1. reduce quantity of owned 2. remove entirley
                 getLedger().addTrade(stockSym, quantity, currprice, false);
-                updateTableData();
+                updateTableData(holdings());
                 return true;
             } else if (quantity == currQty) {
                 removeHolding(stockSym);
                 getLedger().addTrade(stockSym, quantity, currprice, false);
-                updateTableData();
+                updateTableData(holdings());
                 return true;
             } else {
                 print("You do not own enough " + stockSym + " stock to sell " + quantity + " shares");

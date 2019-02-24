@@ -1,4 +1,4 @@
-public class Holding {
+public class Holding implements Row{
     private String _symbol;
     private int _quantity;
     private double _averagePurchasePrice;

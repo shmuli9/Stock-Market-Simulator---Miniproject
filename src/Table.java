@@ -2,10 +2,19 @@
 //todo switch all arrays in table function to ArrayList at first oppertunity
 
 import javax.swing.*;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.regex.Pattern;
+
+interface Row {
+    String[] toStringArr();
+}
 
 public class Table {
     private int rows;  //rows of data (+1 to include column row & +1 to include columns letters)
@@ -17,6 +26,7 @@ public class Table {
     private boolean hasColumns;
     private ArrayList<String[]> tableData; //2d string array //String[] represents a row of data, ArrayList<String[]> represents a table of data
     private int numDecPlaces = 2;
+    private static final String fileName = "file";
 
     public Table(String[] columnData) {
         setRows(0);
@@ -43,8 +53,6 @@ public class Table {
         System.arraycopy(getTableData().get(0), 1, columnBackup, 0, getActCol() - 1);
         this.tableData = newTable(); //clear rows
         this.tableData.add(genTableHeader(columnBackup));
-//        System.out.println(Arrays.toString(getTableData().get(0)));
-//        throw new Error();
     }
 
     public void printTable(String title) {
@@ -256,17 +264,12 @@ public class Table {
 
         updOldData();
         setRows(getRows() + 1); //increment row counters for new data
-        String[] rowToAdd = new String[rowData.length+1];
-        rowToAdd[0]="";
+        String[] rowToAdd = new String[rowData.length + 1];
+        rowToAdd[0] = "";
         System.arraycopy(rowData, 0, rowToAdd, 1, rowData.length);
         getTableData().add(rowToAdd);
 
         print("Row added successfully");
-//        resizeTable();
-//        getTableData().get(oldRows)[0] = ""; //row number column
-//        System.arraycopy(rowData, 0, getTableData().get(oldRows), 1, rowData.length);
-
-
         return true;
     }
 
@@ -281,14 +284,18 @@ public class Table {
         }
     }
 
+    public void updateTableData(Row[] rows) {
+        clear();
+        for (Row row : rows) {
+            addRow(row.toStringArr());
+        }
+    }
+
     private int[] findColumnLengths() {
         int[] widths = new int[getActCol()];
 
-//        String[][] temp = getTableData().clone();
-
         for (int col = 0; col < getActCol(); col++) {
             for (int row = 0; row < getActRow(); row++) {
-                print("col: " + col);
                 String cell = getTableData().get(row)[col];
                 int dec = cell.indexOf('.'); // if string contains '.' its a decimal point which is rounded to two places in my algo
                 String trueL = dec != -1 ? cell.substring(0, dec + ((dec + numDecPlaces < cell.length() ? numDecPlaces + 1 : numDecPlaces))) : cell;
@@ -423,7 +430,7 @@ public class Table {
     }
 
     protected int getRows() {
-        print("getRows: " + this.rows);
+//        print("getRows: " + this.rows);
         return this.rows;
     }
 
@@ -500,5 +507,96 @@ public class Table {
         System.arraycopy(chars, pos, chrs, pos + 1, posi);
         return chrs;
     }
+
+    public void loadFromFile() {
+
+    }
+
+    public void saveToFile() throws IOException {
+        int metaData = getColumns();;
+        String outputLine = String.valueOf(metaData) + "\n";
+
+        for (String[] row : getTableData()) {
+            for (int i = 1; i<row.length;i++) {
+                outputLine += row[i] + "|";
+            }
+        }
+
+        PrintWriter saveFile = new PrintWriter(new FileWriter(fileName + ".txt")); // use a PrintWriter to save this data to a
+        // .txt file
+        saveFile.println(outputLine);
+        saveFile.close(); // close the connection to the file so other processes can access it
+    }
+
+
+    /**
+     * Reads table data from an external file
+     *
+     * @return
+     * @throws IOException
+     */
+    public static ArrayList<ArrayList<String>> readCountryFile() throws IOException {
+        Scanner read = new Scanner(new FileReader(fileName + ".txt"));
+        String metaDelim = "\n";
+        read.useDelimiter(Pattern.compile(metaDelim));
+        int numCols = Integer.parseInt(read.next());
+
+        String delim = "|";
+        read.useDelimiter(Pattern.compile(delim));
+
+        ArrayList<ArrayList<String>> tableData= new ArrayList<ArrayList<String>>();
+
+        while (read.hasNext()){
+            ArrayList<String> row = new ArrayList<String>();
+            for (int i = 0; i < numCols; i++) {
+                row.add(read.next());
+            }
+            tableData.add(row);
+        }
+        read.close();
+
+        return tableData;
+    }
+
+
+    /**
+     * Saves the current table to an external file, for permanent storage.
+     *
+     * @param
+     * @throws IOException
+     */
+//    public static void saveTable() throws IOException {
+//        print("Table data saving...");
+//
+//        int length = numberOfCountries(currentTable);
+//        Country[] countries = arrayOfCountries(currentTable);
+//        String data = "";
+//        String metaData = length + ",4,"; // puts some metadata at begining of file
+//        // first number is how many countries in this medal table
+//        // second number is number of different types of data stored
+//        // kept at 4, to store country name, and 3 different types of medal
+//        // gold, silver and bronze
+//        String tableData = "";
+//
+//        for (int i = 0; i < length; i++) {
+//            int[] medals = medalArray(countries[i]); // load the medal details for the country
+//
+//            tableData += countryName(countries[i]); // store the country name first
+//            tableData += ","; // all data is comma delimited, in order for easy processing
+//            tableData += medals[0]; // then store the medals in descneding order from gold
+//            tableData += ",";
+//            tableData += medals[1]; // to silver
+//            tableData += ",";
+//            tableData += medals[2]; // to bronze
+//            tableData += ",";
+//        }
+//
+//        data = metaData + tableData; // finally add tableData to metaData. metaData goes first
+//
+//        PrintWriter saveFile = new PrintWriter(new FileWriter("table.txt")); // use a PrintWriter to save this data to a
+//        // .txt file
+//        saveFile.println(data);
+//        saveFile.close(); // close the connection to the file so other processes can access it
+//    }// END saveMedalTable
 }
 

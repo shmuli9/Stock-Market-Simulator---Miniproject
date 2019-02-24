@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Random;
@@ -27,6 +28,11 @@ public class StockMarket {
         String welc = "Hi, " + sim.getPlayerName() + ", Welcome to Stock Market Simulator 0.2a\nWhat would you like to do?";
         String[] options = {"Portfolio", "Stock Market", "Ledger"};
         input = SM.printOptions(welc, options, "Quit");
+        try {
+            sim.getMarket().saveToFile();
+        } catch (IOException e) {
+        }
+
 
         while (!input.equals("q")) {
             switch (input) {
@@ -68,12 +74,12 @@ public class StockMarket {
                     break;
                 case "s":
                     sortPref = SM.prompt("Please enter a column to sort by:", STR);
-                    while (!sim.getMarket().sortTable(sortPref)) {
-                        sortPref = SM.prompt("Please enter a column to sort by:", STR);
-                        if (sortPref.equals("q")) {
-                            return "q";
-                        }
+                    //while (!sim.getMarket().sortTable(sortPref)) {
+                    //sortPref = SM.prompt("Please enter a column to sort by:", STR);
+                    if (sortPref.equals("q")) {
+                        return "q";
                     }
+                    //}
                     break;
                 case "m":
                     return "c";

@@ -11,7 +11,7 @@ class Market extends Table {
 
     @Override
     public void printTable() {
-        updateTableData();
+        updateTableData(getStocks());
         System.out.println("Stock Market");
         super.printTable();
     }
@@ -47,7 +47,7 @@ class Market extends Table {
             newHoldings[0] = stock;
             stocks = newHoldings;
         }
-        updateTableData();
+        updateTableData(getStocks());
         return updStock(symbol, price, open, high, low);  //in all cases updStock
     }
 
@@ -62,11 +62,11 @@ class Market extends Table {
      * @return status
      */
     public boolean updStock(String symbol, double price, double open, double high, double low) {
-        System.out.println("updStock:");
+//        System.out.println("updStock:");
         if (getStocks() != null) {
             if (checkForItem(symbol, "Symbol")) {  //if this stock already exists then update info for it
                 boolean success = findStocks(symbol).updateStock(price, open, high, low);
-                updateTableData();
+                updateTableData(getStocks());
                 return success;
             } else { //Stock doesnt already exist, use addStock to add new
                 return false;
@@ -76,14 +76,12 @@ class Market extends Table {
         }
     }
 
-    private void updateTableData() {
-        super.clear();
-        System.out.println("updateTabelData called");
-        for (Stock stock : getStocks()) {
-            System.out.print("updateTableData looping ");
-            addRow(stock.toStringArr());
-        }
-    }
+//    private void updateTableData() {
+//        super.clear();
+//        for (Stock stock : getStocks()) {
+//            addRow(stock.toStringArr());
+//        }
+//    }
 
     public static boolean searchStocks(String symbol) {
         for (int i = 0; i < getNumStocks(); i++) {

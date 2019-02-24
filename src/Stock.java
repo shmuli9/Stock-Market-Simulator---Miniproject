@@ -1,4 +1,4 @@
-public class Stock {
+public class Stock implements Row{
     final private String _name;
     final private String _symbol;
     private double _price;

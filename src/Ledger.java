@@ -10,7 +10,7 @@ public class Ledger extends Table {
         Trade trade = new Trade(symbol, quantity, averagePurchasePrice, BuyOrSale);
         resizeArray(1);
         getTrades()[getTrades().length - 1] = trade;
-        updateTableData();
+        updateTableData(getTrades());
     }
 
     @Override
@@ -29,12 +29,12 @@ public class Ledger extends Table {
         setTrades(newTrade);
     }
 
-    private void updateTableData() {
-        super.clear();
-        for (Trade trade : getTrades()) {
-            addRow(trade.toStringArr());
-        }
-    }
+//    private void updateTableData() {
+//        super.clear();
+//        for (Trade trade : getTrades()) {
+//            addRow(trade.toStringArr());
+//        }
+//    }
 
     public Trade[] getTrades() {
         return trades;
@@ -45,7 +45,7 @@ public class Ledger extends Table {
     }
 }
 
-class Trade {
+class Trade implements Row{
     //vars
     private String _symbol;
     private int _quantity;

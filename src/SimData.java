@@ -61,7 +61,7 @@ class SimData {
                 open = randomWork(500, 1500);
                 high = randomWork(500, 1500);
                 low = randomWork(500, 1500);
-                print("updRandomStocks");
+//                print("updRandomStocks");
                 success = getMarket().updStock(s.getSymbol(), price, open, high, low);
             }
         }
