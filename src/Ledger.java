@@ -21,7 +21,8 @@ public class Ledger extends Table {
         Trade trade = new Trade(symbol, quantity, averagePurchasePrice, BuyOrSale);
         getTrades().add(trade);
 
-        updateTableData(getTrades().toArray(new Trade[0]));
+//        updateTableData(getTrades().toArray(new Trade[0]));
+        updateTableData(getTrades());
     }
 
     @Override

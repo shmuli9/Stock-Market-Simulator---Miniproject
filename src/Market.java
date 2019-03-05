@@ -1,17 +1,15 @@
-import java.util.Date;
+import java.util.ArrayList;
 
 class Market extends Table {
-    private static Stock[] stocks;
-    private Date today;
+//    private static Stock[] stocks;
+    private static ArrayList<Stock> stocks;
 
     public Market() throws ClassNotFoundException {
-//        super();
         super(Class.forName(Stock.class.getName()));
     }
 
     @Override
     public void printTable() {
-//        updateTableData(getStocks());
         System.out.println("Stock Market");
         super.printTable();
     }
@@ -32,20 +30,14 @@ class Market extends Table {
         if (getStocks() != null) {
             if (!checkForItem(symbol, "Symbol")) {  //if this stock hasnt been added, add now
                 Stock stock = new Stock(name, symbol, numShares);
-                int currLength = getNumStocks();
-
-                Stock[] newHoldings = new Stock[currLength + 1];
-                System.arraycopy(getStocks(), 0, newHoldings, 0, currLength);
-
-                newHoldings[currLength] = stock;
-                stocks = newHoldings;
+                getStocks().add(stock);
             }
         } else { //getStocks() not yet been initialised
             Stock stock = new Stock(name, symbol, numShares);
-            Stock[] newHoldings = new Stock[1];
+            ArrayList<Stock> newHoldings = new ArrayList<>();
+            newHoldings.add(stock);
 
-            newHoldings[0] = stock;
-            stocks = newHoldings;
+            initStocks(newHoldings);
         }
         updateTableData(getStocks());
         return updStock(symbol, price, open, high, low);  //in all cases updStock
@@ -76,9 +68,16 @@ class Market extends Table {
         }
     }
 
+    public static void initStocks(ArrayList<Stock> stocks) {
+        Market.stocks = stocks;
+    }
+
     public static boolean searchStocks(String symbol) {
         for (int i = 0; i < getNumStocks(); i++) {
-            if (getStocks()[i].toStringArr()[1].equalsIgnoreCase(symbol)) {
+//            if (getStocks()[i].toStringArr()[1].equalsIgnoreCase(symbol)) {
+//                return true;
+//            }
+            if (getStocks().get(i).getSymbol().equalsIgnoreCase(symbol)){
                 return true;
             }
         }
@@ -87,23 +86,22 @@ class Market extends Table {
 
     public static Stock findStocks(String symbol) {
         for (int i = 0; i < getNumStocks(); i++) {
-            if (getStocks()[i].toStringArr()[1].equalsIgnoreCase(symbol)) {
-                return getStocks()[i];
+//            if (getStocks()[i].toStringArr()[1].equalsIgnoreCase(symbol)) {
+//                return getStocks()[i];
+//            }
+            if (getStocks().get(i).getSymbol().equalsIgnoreCase(symbol)){
+                return getStocks().get(i);
             }
         }
         return null;
     }
 
-    private static Stock[] getStocks() {
-        return stocks;
-    }
-
-    public Stock[] getStock() {
+    public static ArrayList<Stock> getStocks() {
         return stocks;
     }
 
     public static int getNumStocks() {
-        return stocks.length;
+        return stocks.size();
     }
 
 

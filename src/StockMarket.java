@@ -22,7 +22,7 @@ public class StockMarket {
         Scanner in = new Scanner(System.in);
         String input;
         SimData sim = new SimData(SM.prompt("Please enter your name: ", STR));
-        String welc = "Hi, " + sim.getPlayerName() + ", Welcome to Stock Market Simulator 0.2a\nWhat would you like to do?";
+        String welc = "Hi, " + sim.getPlayerName() + ", Welcome to Stock Market Simulator 0.3a\nWhat would you like to do?";
         String[] options = {"Portfolio", "Stock Market", "Ledger"};
         input = SM.printOptions(welc, options, "Quit");
         try {

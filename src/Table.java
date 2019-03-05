@@ -1,5 +1,4 @@
 //todo save table to file & sql integration (sqlite easiest)
-//todo switch all arrays in table function to ArrayList at first oppertunity
 
 import javax.swing.*;
 import java.io.FileReader;
@@ -183,7 +182,7 @@ public class Table {
         }
     }
 
-    protected void updateTableData(ArrayList<Row> rows) {
+    protected void updateTableData(ArrayList<? extends Row> rows) {
         clear();
         for (Row row : rows) {
             addRow(row.toStringArr());
@@ -635,7 +634,7 @@ public class Table {
         this.actCol = columns + 1;
     }
     //END Getter and Setters
-
+    {
 //    /*********************************
 //     * Deprecated Sort Algorithm:
 //     */
@@ -711,5 +710,6 @@ public class Table {
 //        return true;
 //    }
 //    //END of Sort Algorithm
+    }
 }
 

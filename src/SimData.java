@@ -53,7 +53,7 @@ class SimData {
     public void updRandomStocks() {
         double price, open, low, high;
 
-        for (Stock s : getMarket().getStock()) {
+        for (Stock s : getMarket().getStocks()) {
             boolean success = false;
 
             while (!success) {
