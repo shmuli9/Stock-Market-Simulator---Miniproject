@@ -15,10 +15,7 @@ public class StockMarket {
 
         print("Goodbye!");
 
-        //todo make sure after every transaction and stock refresh, stock prices update
-        //setupStocks();
-        //setupPortfol();
-        //TESTS();
+        //todo make sure after every transaction stock prices update
     }
 
     public static void menu() {
@@ -66,7 +63,6 @@ public class StockMarket {
         while (!inp.equals("q")) {
             sim.getMarket().sortTable(sortPref);
             printTable(sim.getMarket());
-            //sim.getMarket().printTable();
             inp = SM.printOptions("Options:\nTo refresh stock prices type R\nTo sort, type S", valid, "q");
             switch (inp) {
                 case "r":
@@ -74,12 +70,9 @@ public class StockMarket {
                     break;
                 case "s":
                     sortPref = SM.prompt("Please enter a column to sort by:", STR);
-                    //while (!sim.getMarket().sortTable(sortPref)) {
-                    //sortPref = SM.prompt("Please enter a column to sort by:", STR);
                     if (sortPref.equals("q")) {
                         return "q";
                     }
-                    //}
                     break;
                 case "m":
                     return "c";

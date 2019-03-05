@@ -21,40 +21,213 @@ public class Table {
     private int columns; //columns of data (+1 to include row numbers)
     private int actCol; //actual number of columns (including standard output, eg. column heading)
     private int actRow; //actual number of rows (including standard output, eg. row number)
-    private int oldRows;    //used for maintanance
-    private int oldColumns; //used for maintanance
-    private boolean hasColumns;
-    private ArrayList<String[]> tableData; //2d string array //String[] represents a row of data, ArrayList<String[]> represents a table of data
+    private ArrayList<ArrayList<String>> tableData; //2d string array //String[] represents a row of data, ArrayList<String[]> represents a table of data
     private int numDecPlaces = 2;
     private static final String fileName = "file";
 
+    /*Constructors*/
     public Table(String[] columnData) {
         setRows(0);
         setColumns(columnData.length);
-//        setHasColumns(true);
 
-        this.tableData = newTable();
+        this.tableData = new ArrayList<>();
         this.tableData.add(genTableHeader(columnData));  //first row (0th index) is column data ([0][0] is "Row#")
     }
 
     public Table(Class<?> C) {
         setRows(0);
         setColumns(genColumns(C).length);
-//        setHasColumns(false);
 
-        this.tableData = newTable();
+        this.tableData = new ArrayList<>();
         this.tableData.add(genTableHeader(genColumns(C)));
     }
+    //END Constructors
 
+    /*Table Methods*/
     public void clear() {
         setRows(0); //clear rows
-        this.oldRows = 0;
         String[] columnBackup = new String[getActCol() - 1]; //first element of ArrList is column headers String[]
-        System.arraycopy(getTableData().get(0), 1, columnBackup, 0, getActCol() - 1);
-        this.tableData = newTable(); //clear rows
+
+        for (int i = 1; i < getActCol(); i++) {
+            columnBackup[i - 1] = getTableData().get(0).get(i);
+        }
+        this.tableData = new ArrayList<>(); //clear rows
         this.tableData.add(genTableHeader(columnBackup));
     }
 
+    /************
+     * Adds a row to the table
+     * @param rowData
+     * @return
+     */
+    public boolean addRow(String[] rowData) {
+        //check that the row matches columns
+        if (rowData.length != getColumns()) {
+            JOptionPane.showMessageDialog(null, "Error: rows must contain same number of columns as table. This table has " + getColumns() + " columns. You provided " + rowData.length);
+            return false;
+        }
+
+        setRows(getRows() + 1); //increment row counters for new data
+        ArrayList<String> rowToAdd = new ArrayList<String>();
+        rowToAdd.add(""); //first cell in row is empty, for row number, on printing
+        rowToAdd.addAll(Arrays.asList(rowData)); //add rest of row to ArrayList
+        getTableData().add(rowToAdd); //add the row to the TableData ArrayList
+
+        return true;
+    }
+
+    /************
+     * Adds multiple rows to the table
+     * @param rowData
+     * @return
+     */
+    public void addMultRows(String[][] rowData) {
+        for (String[] row : rowData) {
+            if (addRow(row)) {
+            } else {
+                break;
+            }
+        }
+    }
+
+    private int findColumnIndex(String columnName) {
+        boolean found = false;
+
+        for (int col = 0; col < getActCol(); col++) {
+            if (getTableData().get(0).get(col).equalsIgnoreCase(columnName)) {
+                found = true;
+                return col;
+            }
+        }
+        if (!found) {
+            print("Error, column \"" + columnName + "\" not found");
+        }
+        throw new Error("Column not found");
+//        return -1;
+    }
+
+    public boolean sortTable(String sortColumn) {
+        int colInd = findColumnIndex(sortColumn);
+        if (colInd == -1) {
+            return false;
+        }
+
+        if (isNumber(getTableData().get(1).get(colInd)) && isNumber(getTableData().get(2).get(colInd))) {
+            Collections.sort(getTableData().subList(1, getTableData().size()), new Comparator<ArrayList<String>>() {
+                @Override
+                public int compare(ArrayList<String> o1, ArrayList<String> o2) {
+                    double d1 = Double.parseDouble(o1.get(colInd));
+                    double d2 = Double.parseDouble(o2.get(colInd));
+                    return Double.compare(d2, d1);
+                }
+            });
+        } else {
+            Collections.sort(getTableData().subList(1, getTableData().size()), new Comparator<ArrayList<String>>() {
+                @Override
+                public int compare(ArrayList<String> o1, ArrayList<String> o2) {
+                    return o1.get(colInd).compareTo(o2.get(colInd));
+                }
+            });
+        }
+        print("Table sorted by " + sortColumn);
+        return true;
+    }
+
+    /*********
+     * Dynamically generate column names for a specific class
+     * Column is detected by looking for _ at beginning of instance fields
+     * @param C
+     * @return
+     */
+    public String[] genColumns(Class C) {
+        String[] columnHeaders = new String[0];
+
+        for (Field classField : C.getDeclaredFields()) { //get all the fields from the class C
+            if (classField.getName().charAt(0) == '_') { //check for starting _
+                String fieldName = classField.getName().substring(1); //get the name without the _
+                char[] field = fieldName.toCharArray();
+                field[0] = Character.toUpperCase(field[0]);
+
+                for (int j = 1; j < field.length; j++) {
+                    if (Character.isUpperCase(field[j])) {
+                        field = insertChar(field, ' ', j);
+                        j++;
+                    }
+                }
+                columnHeaders = addToArray(columnHeaders, String.valueOf(field));
+            }
+        }
+        return columnHeaders;
+    }
+
+    private ArrayList<String> genTableHeader(String[] userColumns) {
+        int newArrSize = getActCol();
+        ArrayList<String> tableColumns = new ArrayList<String>();
+
+        tableColumns.add("Row#");
+        tableColumns.addAll(Arrays.asList(userColumns));
+
+        //System.arraycopy(userColumns, 0, tableColumns, 1, userColumns.length);
+
+        return tableColumns;
+    }
+
+    /************
+     * Allows Table subclasses to update TableData with Row interfaced objects
+     * @param rows
+     */
+    protected void updateTableData(Row[] rows) {
+        clear();
+        for (Row row : rows) {
+            addRow(row.toStringArr());
+        }
+    }
+
+    protected void updateTableData(ArrayList<Row> rows) {
+        clear();
+        for (Row row : rows) {
+            addRow(row.toStringArr());
+        }
+    }
+
+    public boolean checkForItem(String searchKey, String searchColumn) {
+        boolean found = false;
+        int col = findColumnIndex(searchColumn);
+        for (int row = 1; row < getActRow(); row++) {
+            String cell = getTableData().get(row).get(col);
+
+            if (cell.equalsIgnoreCase(searchKey)) {
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
+
+    public String lookupCell(String searchKey, String searchColumn, String returnColumn) {
+        boolean found = false;
+        String returnCell = "";
+        int col = findColumnIndex(searchColumn);
+
+        for (int row = 1; row < getActRow(); row++) {
+            String cell = getTableData().get(row).get(col);
+            if (cell.equalsIgnoreCase(searchKey)) {
+                found = true;
+
+                String data = getTableData().get(row).get(findColumnIndex(returnColumn));
+                returnCell = (isNumber(data) ? roundD(data) : data);
+                break;
+            }
+        }
+        if (!found) {
+            print("Error, " + searchColumn + ": \"" + searchKey + "\" not found");
+        }
+
+        return returnCell;
+    }
+    //END Table Methods
+
+    /*Print  and formatting methods*/
     public void printTable(String title) {
         print(title);
         printTable();
@@ -65,7 +238,7 @@ public class Table {
         String[] seperators = buildSep(colLengths);
 
         for (int rowNum = 0; rowNum < getActRow(); rowNum++) {    //i counts rows (0th row is column names)
-            getTableData().get(rowNum)[0] = (rowNum != 0 ? String.valueOf(rowNum) : "Row#"); //row number
+            getTableData().get(rowNum).set(0, (rowNum != 0 ? String.valueOf(rowNum) : "Row#")); //row number
             printRow(rowNum, colLengths, seperators);
         }
         pad(1);
@@ -79,12 +252,12 @@ public class Table {
         Formatter frmtr = new Formatter(row);
 
         for (int col = 0; col < colLengths.length; col++) { //col counts columns (0th column is first logical column)
-            String cell = getTableData().get(rowNum)[col];
-            String colName = getTableData().get(0)[col];
+            String cell = getTableData().get(rowNum).get(col);
+            String colName = getTableData().get(0).get(col);
 
             int indq = colName.indexOf('q');
             int indQ = colName.indexOf('Q');
-            cell = (indQ + indq > -2 ? cell : (col != 0 ? (isNumber(cell) ? fpNotToReg(cell) : cell) : cell));
+            cell = (indQ + indq > -2 ? cell : (col != 0 ? (isNumber(cell) ? FPtoRegular(cell) : cell) : cell));
 
             frmtr.format("|%-" + colLengths[col] + "s", cell);
         }
@@ -103,203 +276,70 @@ public class Table {
         }
     }
 
-    public void printColumn(String columnName) {
-        StringBuilder row = new StringBuilder();
-        Formatter frmtr = new Formatter(row);
+    //    public void printColumn(String columnName) {
+//        int[] colLengths = findColumnLengths();
+//        String[] seperators = buildSep(colLengths);
+//
+//        for (int rowNum = 0; rowNum < getActRow(); rowNum++) {    //i counts rows (0th row is column names)
+//            getTableData().get(rowNum).set(0, (rowNum != 0 ? String.valueOf(rowNum) : "Row#")); //row number
+//            printRow(rowNum, colLengths, seperators);
+//        }
+//        pad(1);
+//
+//        String sepDouble = seperators[0]; // seperator line =====
+//        String sepSingle = seperators[1]; // seperator line -----
+//
+//        StringBuilder row = new StringBuilder();
+//        Formatter frmtr = new Formatter(row);
+//
+//        for (int col = 0; col < colLengths.length; col++) { //col counts columns (0th column is first logical column)
+//            String cell = getTableData().get(rowNum).get(col);
+//            String colName = getTableData().get(0).get(col);
+//
+//            int indq = colName.indexOf('q');
+//            int indQ = colName.indexOf('Q');
+//            cell = (indQ + indq > -2 ? cell : (col != 0 ? (isNumber(cell) ? FPtoRegular(cell) : cell) : cell));
+//
+//            frmtr.format("|%-" + colLengths[col] + "s", cell);
+//        }
+//        frmtr.format("|");
+//
+//        if (rowNum == 0) {
+//            print(sepSingle);
+//        }
+//
+//        print(row.toString());
+//
+//        if (rowNum == 0) {
+//            print(sepDouble);
+//        } else {
+//            print(sepSingle);
+//        }
+//
+//        StringBuilder row = new StringBuilder();
+//        Formatter frmtr = new Formatter(row);
+//
+//        int col = findColumnIndex(columnName);
+//        for (int rowNum = 0; rowNum < getActRow(); rowNum++) {    //i counts rows (0th row is column names)
+//            frmtr.format("|%-" + findColumnLengths()[col] + "s|", getTableData().get(rowNum).get(col));
+//            print(row.toString());
+//        }
+//    }
 
-        int col = findColumnIndex(columnName);
-        for (int rowNum = 0; rowNum < getActRow(); rowNum++) {    //i counts rows (0th row is column names)
-            frmtr.format("|%-" + findColumnLengths()[col] + "s|", getTableData().get(rowNum)[col]);
-            print(row.toString());
-        }
-    }
-
-    private int findColumnIndex(String columnName) {
-        boolean found = false;
-        print("Finding column index for: " + columnName);
-//        print(getTableData().get(0)[1]);
-        for (int col = 0; col < getActCol(); col++) {
-            if (getTableData().get(0)[col].equalsIgnoreCase(columnName)) {
-                found = true;
-                print(String.valueOf(col));
-                return col;
-            }
-        }
-        if (!found) {
-            print("Error, column \"" + columnName + "\" not found");
-        }
-        return -1;
-    }
-
-    public boolean sortTable(String sortColumn) {
-        int colIndex = findColumnIndex(sortColumn);
-        if (colIndex == -1) {
-            return false;
-        }
-
-        boolean changed = true;
-
-        while (changed) {
-            for (int pass = 0; pass < getRows(); pass++) {
-                changed = false;
-                for (int row = 1; row < getRows() - pass; row++) {
-                    int nextRow = row + 1;
-
-                    String s1 = getTableData().get(row)[colIndex];
-                    String s2 = getTableData().get(nextRow)[colIndex];
-
-                    changed = compare(s1, s2, row, nextRow);
-                }
-            }
-        }
-        print("Table sorted by " + sortColumn);
-        return true;
-    }
-
-    private boolean compare(String t1, String t2, int row, int nextRow) {
-        try {
-            double d1 = Double.parseDouble(t1);
-            double d2 = Double.parseDouble(t2);
-            return compareD(d1, d2, row, nextRow);
-        } catch (NumberFormatException e) {
-            t1 = t1.toLowerCase();
-            t2 = t2.toLowerCase();
-            return compareS(t1, t2, row, nextRow);
-        }
-    }
-
-    private boolean compareD(Double d1, Double d2, int row, int nextRow) {
-        int i = 0;
-        boolean cont = true;
-        while (cont) {
-            cont = false;
-            if (d1 < d2) {
-                return swap(row, nextRow);
-            }
-        }
-        return false;
-    }
-
-    private boolean swap(int row, int nextRow) {
-        String[] temp = getTableData().get(row);
-//        getTableData().get(row) = getTableData().get(nextRow);
-        getTableData().set(row, getTableData().get(nextRow));
-        getTableData().set(nextRow, temp);
-        return true;
-    }
-
-    private boolean compareS(String t1, String t2, int row, int nextRow) {
-        int i = 0;
-        boolean cont = true;
-        while (cont) {
-            cont = false;
-            if (t1.charAt(i) > t2.charAt(i)) {
-                return swap(row, nextRow);
-            } else if (t1.charAt(i) == t2.charAt(i)) {
-                cont = true;
-                i++;
-            }
-        }
-        return false;
-    }
-
-    public boolean checkForItem(String searchKey, String searchColumn) {
-        boolean found = false;
-        int col = findColumnIndex(searchColumn);
-        print("Searching for: " + searchKey + ", in col: " + col);
-        print(getTableData().get(1)[1]);
-//        printTable();
-        for (int row = 1; row < getActRow(); row++) {
-            String cell = getTableData().get(row)[col];
-            print(cell);
-            if (cell.equalsIgnoreCase(searchKey)) {
-                found = true;
-                break;
-            }
-        }
-        print("Search " + found + "!");
-        return found;
-    }
-
-    public String lookupCell(String searchKey, String searchColumn, String returnColumn) {
-        boolean found = false;
-        String returnCell = "";
-        int col = findColumnIndex(searchColumn);
-
-        for (int row = 1; row < getActRow(); row++) {
-            String cell = getTableData().get(row)[col];
-            if (cell.equalsIgnoreCase(searchKey)) {
-                found = true;
-
-                String data = getTableData().get(row)[findColumnIndex(returnColumn)];
-                returnCell = (isNumber(data) ? roundD(data) : data);
-                break;
-            }
-        }
-        if (!found) {
-            print("Error, " + searchColumn + ": \"" + searchKey + "\" not found");
-        }
-
-        return returnCell;
-    }
-
-    private boolean isNumber(String s) {
-        // todo fix somehow...
-        try {
-            Double.parseDouble(s.substring(0, s.length() - 3)); //substring necessary to remove % sign from percentages which still need rounding
-            return true;
-        } catch (NumberFormatException e) {
-        } catch (StringIndexOutOfBoundsException a) {
-        }
-        return false;
-    }
-
-    public boolean addRow(String[] rowData) {
-        //go to end of table using oldRows&oldColumns, add data there
-        print("addRow");
-        if (rowData.length != getColumns()) {
-            JOptionPane.showMessageDialog(null, "Error: rows must contain same number of columns as table. This table has " /*+ getColumns() + " columns. You provided " + rowData.length*/);
-            return false;
-        }
-
-        updOldData();
-        setRows(getRows() + 1); //increment row counters for new data
-        String[] rowToAdd = new String[rowData.length + 1];
-        rowToAdd[0] = "";
-        System.arraycopy(rowData, 0, rowToAdd, 1, rowData.length);
-        getTableData().add(rowToAdd);
-
-        print("Row added successfully");
-        return true;
-    }
-
-    public void addMultRows(String[][] rowData) {
-        //go to end of table using oldRows&oldColumns, add data there
-        if (rowData[0].length != getColumns()) {
-            JOptionPane.showMessageDialog(null, "Error: rows must contain same number of columns as table. This table has " + getColumns() + " columns");
-        } else {
-            for (int j = 0; j < rowData.length; j++) {
-                addRow(rowData[j]);
-            }
-        }
-    }
-
-    public void updateTableData(Row[] rows) {
-        clear();
-        for (Row row : rows) {
-            addRow(row.toStringArr());
-        }
-    }
-
+    /***********************
+     * returns integer array of column
+     * lengths for use in layout of the table
+     * @return
+     */
     private int[] findColumnLengths() {
-        int[] widths = new int[getActCol()];
+        int[] widths = new int[getActCol()]; //generates widths for all columns
 
         for (int col = 0; col < getActCol(); col++) {
             for (int row = 0; row < getActRow(); row++) {
-                String cell = getTableData().get(row)[col];
+                String cell = getTableData().get(row).get(col);
                 int dec = cell.indexOf('.'); // if string contains '.' its a decimal point which is rounded to two places in my algo
                 String trueL = dec != -1 ? cell.substring(0, dec + ((dec + numDecPlaces < cell.length() ? numDecPlaces + 1 : numDecPlaces))) : cell;
-                trueL = isNumber(cell) ? fpNotToReg(cell) : cell;
+                trueL = isNumber(cell) ? FPtoRegular(cell) : cell;
 
                 if (trueL.length() > widths[col]) {
                     widths[col] = trueL.length();
@@ -309,20 +349,32 @@ public class Table {
         return widths;
     }
 
-    private String fpNotToReg(String cell) {
+    /****************************************
+     * Convert floating point number notation to
+     * manageable decimals to 2 decimal points and
+     * adds a letter for Million/Billion
+     * @param cell
+     * @return
+     */
+    private String FPtoRegular(String cell) {
         String[] zeroToABC = {"", "", "", "", "", "", "M", "", "", "B", "", "", "T"};
         //                    0   1   2   3   4   5    6   7   8    9  10   11  12
         String s = cell;
-        int indPC = s.indexOf('%');
-
-        double numToD = Double.parseDouble(indPC != -1 ? cell.substring(0, indPC) : cell); //this string is a number
+        int indPC = s.indexOf('%'); //index of % symbol, index of -1 means no % symbol present
+        double numToD = Double.parseDouble(indPC != -1 ? cell.substring(0, indPC) : cell); //if there is a pc symbol then seperate it out and convert to double, otherwise leave and convert to double
+        //this string is a number
         boolean formatted = false;
+        int indE = s.indexOf('E'); //Large numbers in double are represented by E numbers 6.123E9 = 6,123,000,000 or 6.123 Billion
 
-        int indE = s.indexOf('E');
-
-        if (indE != -1) { //codeblock formats large number from style of 2.3*10^9 to 2.3B(illion)
+        /*codeblock formats large number from style of 2.3*10^9 to 2.3B(illion) */
+        if (indE != -1) {
+            /*digit is substring which contains significant figures of the number*/
             String digit = s.substring(0, indE);
+            /*get the integer of the exponent (digit after E)*/
             int exp = Integer.parseInt(s.substring(indE + 1));
+            /* mod 3, as every 3 digits, the english name for the number changes.
+             * Mod value is how far off exponent is from next english name
+             */
             int shift = exp % 3;
 
             if (!(exp == 6 || exp == 9 || exp == 12)) {     //exponent isnt 6,9 or 12, which is m, b or t
@@ -348,35 +400,6 @@ public class Table {
     private String roundD(String s) {
         BigDecimal roundedNum = new BigDecimal(s).setScale(numDecPlaces, RoundingMode.HALF_UP);
         return roundedNum.toString();
-    }
-
-    private String[] genTableHeader(String[] userColumns) {
-        int newArrSize = getActCol();
-        String[] tableColumns = new String[newArrSize];
-
-        tableColumns[0] = "Row#";
-
-        System.arraycopy(userColumns, 0, tableColumns, 1, userColumns.length);
-
-        return tableColumns;
-    }
-
-//    private void resizeTable() {  //add row to table
-//        print("resizeTable called");
-//
-//
-//        ArrayList<String[]> newTable = newTable(); //create new larger table
-////        System.arraycopy(getTableData(), 0, newTable, 0, tableData.length);
-//
-//        this.tableData = newTable;
-//    }
-
-    private ArrayList<String[]> newTable() {
-        return new ArrayList<String[]>();
-    }
-
-    private void calcCentre(int[] colLengths) {
-        //this.tableData;
     }
 
     private String[] buildSep(int[] colLengths) {
@@ -407,55 +430,6 @@ public class Table {
         }
     }
 
-    private void updOldData() {
-        this.oldRows = getActRow();
-        this.oldColumns = getActCol();
-    }
-
-    private int getActCol() {
-        return actCol;
-    }
-
-    private int getActRow() {
-        return actRow;
-    }
-
-    protected ArrayList<String[]> getTableData() {
-        if (!this.tableData.isEmpty()/* != null*/) {
-//            print("returned arraylist");
-            return this.tableData;
-        }
-        print("returned null");
-        return null;
-    }
-
-    protected int getRows() {
-//        print("getRows: " + this.rows);
-        return this.rows;
-    }
-
-    private void setRows(int rows) {
-        this.rows = rows;
-        this.actRow = rows + 1;
-    }
-
-    private int getColumns() {
-        return this.columns;
-    }
-
-    private void setColumns(int columns) {
-        this.columns = columns;
-        this.actCol = columns + 1;
-    }
-
-    private boolean hasColumns() {
-        return hasColumns;
-    }
-
-    private void setHasColumns(boolean hasColumns) {
-        this.hasColumns = hasColumns;
-    }
-
     /**
      * Prints a string to the console.
      *
@@ -465,6 +439,56 @@ public class Table {
         System.out.println(msg);
     }// END print
 
+    private void calcCentre(int[] colLengths) {
+        //this.tableData;
+    }
+    //END print methods
+
+    /*Utility Methods*/
+    /********
+     * Utility class that converts a two dimensional
+     * ArrayList of type String into a String[][]
+     */
+    public static String[][] ArrayListto2DArray(ArrayList<ArrayList<String>> table) {
+        String[][] arrayTable = new String[table.size()][table.get(0).size()]; //first dimension is actRows, 2nd dimension is actCols
+
+        for (int i = 0; i < table.size(); i++) {
+            ArrayList<String> el = table.get(i);
+            for (int j = 0; j < el.size(); j++) {
+                String cell = el.get(j);
+                arrayTable[i][j] = cell;
+            }
+        }
+        return arrayTable;
+    }
+
+    /************
+     * Returns objects TableData as a 2D array
+     * @return
+     */
+    protected String[][] toArray() {
+        return ArrayListto2DArray(getTableData());
+    }
+
+    private boolean isNumber(String s) {
+        // todo fix somehow...
+        try {
+            Double.parseDouble(s.substring(0, s.length() - 3)); //substring necessary to remove % sign from percentages which still need rounding
+            return true;
+        } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
+        }
+        return false;
+    }
+
+    /*****************
+     * Adds an element to an array, by first
+     * increasing the array size, then copying
+     * the old data into it and then putting
+     * the new data at the end.
+     * @param array
+     * @param info
+     * @return
+     */
     private String[] addToArray(String[] array, String info) {
         String[] newArr = new String[array.length + 1];
         System.arraycopy(array, 0, newArr, 0, array.length);
@@ -472,53 +496,35 @@ public class Table {
         return newArr;
     }
 
-    public String[] genColumns(Class C) {
-        Field[] allFields = C.getDeclaredFields();
-        String[] columnHeaders = new String[0];
-
-        for (Field classField : allFields) {
-            if (classField.getName().charAt(0) == '_') {
-                String fieldName = classField.getName().substring(1);
-                char[] field = fieldName.toCharArray();
-                field[0] = Character.toUpperCase(field[0]);
-                int count = 0;
-
-                for (int j = 1; j < fieldName.length(); j++) {
-                    if (Character.isUpperCase(fieldName.charAt(j))) {
-                        field = insertChar(field, ' ', j + count);
-                        count++;
-                    }
-                }
-                columnHeaders = addToArray(columnHeaders, String.copyValueOf(field));
-            }
-        }
-        return columnHeaders;
-    }
-
-    private char[] insertChar(char[] chars, char ch, int pos) {
-        char[] chrs = new char[chars.length + 1];
+    /*************
+     * Inserts a character at a specified point in a char array
+     * @param oldChar
+     * @param ch
+     * @param position
+     * @return
+     */
+    private char[] insertChar(char[] oldChar, char ch, int position) {
+        char[] newChar = new char[oldChar.length + 1];
         // p r i c e s s - array
         // 1 2 3 4 5 6 7 - length
         // 0 1 2 3 4 5 6 - index
         // 0 5 6         - caparray
-        int posi = chars.length - pos; //2
-        System.arraycopy(chars, 0, chrs, 0, pos);
-        chrs[pos] = ch;
-        System.arraycopy(chars, pos, chrs, pos + 1, posi);
-        return chrs;
+        int index = oldChar.length - position; //2
+        System.arraycopy(oldChar, 0, newChar, 0, position);
+        newChar[position] = ch;
+        System.arraycopy(oldChar, position, newChar, position + 1, index);
+        return newChar;
     }
+    //END Utility
 
-    public void loadFromFile() {
-
-    }
-
+    /*File IO*/
     public void saveToFile() throws IOException {
-        int metaData = getColumns();;
+        int metaData = getColumns();
         String outputLine = String.valueOf(metaData) + "\n";
 
-        for (String[] row : getTableData()) {
-            for (int i = 1; i<row.length;i++) {
-                outputLine += row[i] + "|";
+        for (ArrayList<String> row : getTableData()) {
+            for (int i = 1; i < row.size(); i++) {
+                outputLine += row.get(i) + "|";
             }
         }
 
@@ -528,14 +534,13 @@ public class Table {
         saveFile.close(); // close the connection to the file so other processes can access it
     }
 
-
     /**
      * Reads table data from an external file
      *
      * @return
      * @throws IOException
      */
-    public static ArrayList<ArrayList<String>> readCountryFile() throws IOException {
+    public static ArrayList<ArrayList<String>> readFile() throws IOException {
         Scanner read = new Scanner(new FileReader(fileName + ".txt"));
         String metaDelim = "\n";
         read.useDelimiter(Pattern.compile(metaDelim));
@@ -544,9 +549,9 @@ public class Table {
         String delim = "|";
         read.useDelimiter(Pattern.compile(delim));
 
-        ArrayList<ArrayList<String>> tableData= new ArrayList<ArrayList<String>>();
+        ArrayList<ArrayList<String>> tableData = new ArrayList<ArrayList<String>>();
 
-        while (read.hasNext()){
+        while (read.hasNext()) {
             ArrayList<String> row = new ArrayList<String>();
             for (int i = 0; i < numCols; i++) {
                 row.add(read.next());
@@ -557,46 +562,154 @@ public class Table {
 
         return tableData;
     }
+    //END File IO
 
+    /*Getters and Setters*/
+    protected ArrayList<ArrayList<String>> getTableData() {
+        if (!this.tableData.isEmpty()) {
+            return this.tableData;
+        }
+        print("returned null");
+        throw new NullPointerException("TableData has not been initialised");
+//        return null;
+    }
 
-    /**
-     * Saves the current table to an external file, for permanent storage.
-     *
-     * @param
-     * @throws IOException
+    protected ArrayList<ArrayList<String>> getTableRows() {
+        if (!this.tableData.isEmpty()) {
+            ArrayList<ArrayList<String>> newArrList = new ArrayList<ArrayList<String>>();
+            ArrayList<ArrayList<String>> justRows = new ArrayList<ArrayList<String>>(getTableData().subList(1, getTableData().size()));
+            for (ArrayList<String> row : justRows) {
+                newArrList.add(new ArrayList<String>(row.subList(1, row.size())));
+            }
+            return newArrList;
+        }
+        throw new NullPointerException("TableData has not been initialised");
+//        return null;
+    }
+
+    /**************
+     * Actual number of columns. Includes Row# column
      */
-//    public static void saveTable() throws IOException {
-//        print("Table data saving...");
-//
-//        int length = numberOfCountries(currentTable);
-//        Country[] countries = arrayOfCountries(currentTable);
-//        String data = "";
-//        String metaData = length + ",4,"; // puts some metadata at begining of file
-//        // first number is how many countries in this medal table
-//        // second number is number of different types of data stored
-//        // kept at 4, to store country name, and 3 different types of medal
-//        // gold, silver and bronze
-//        String tableData = "";
-//
-//        for (int i = 0; i < length; i++) {
-//            int[] medals = medalArray(countries[i]); // load the medal details for the country
-//
-//            tableData += countryName(countries[i]); // store the country name first
-//            tableData += ","; // all data is comma delimited, in order for easy processing
-//            tableData += medals[0]; // then store the medals in descneding order from gold
-//            tableData += ",";
-//            tableData += medals[1]; // to silver
-//            tableData += ",";
-//            tableData += medals[2]; // to bronze
-//            tableData += ",";
+    private int getActCol() {
+        return actCol;
+    }
+
+    /*****
+     * Actual number of rows. Includes headings row
+     */
+    private int getActRow() {
+        return actRow;
+    }
+
+    /********
+     * Number of data rows, excludes headings
+     * @return
+     */
+    protected int getRows() {
+        return this.rows;
+    }
+
+    /***********
+     * Number of data columns, excludes Row# column
+     * @return
+     */
+    private int getColumns() {
+        return this.columns;
+    }
+
+    /*************
+     * Track number of rows in TableData
+     * @param rows
+     */
+    private void setRows(int rows) {
+        this.rows = rows;
+        this.actRow = rows + 1;
+    }
+
+    /*************
+     * Track number of columns in TableData
+     * @param columns
+     */
+    private void setColumns(int columns) {
+        this.columns = columns;
+        this.actCol = columns + 1;
+    }
+    //END Getter and Setters
+
+//    /*********************************
+//     * Deprecated Sort Algorithm:
+//     */
+//    public boolean oldSortTable(String sortColumn) {
+//        int colIndex = findColumnIndex(sortColumn);
+//        if (colIndex == -1) {
+//            return false;
 //        }
+//        boolean changed = true;
 //
-//        data = metaData + tableData; // finally add tableData to metaData. metaData goes first
+//        while (changed) {
+//            for (int pass = 0; pass < getRows(); pass++) {
+//                changed = false;
+//                for (int row = 1; row < getRows() - pass; row++) {
+//                    int nextRow = row + 1;
 //
-//        PrintWriter saveFile = new PrintWriter(new FileWriter("table.txt")); // use a PrintWriter to save this data to a
-//        // .txt file
-//        saveFile.println(data);
-//        saveFile.close(); // close the connection to the file so other processes can access it
-//    }// END saveMedalTable
+//                    String s1 = getTableData().get(row).get(colIndex);
+//                    String s2 = getTableData().get(nextRow).get(colIndex);
+//
+//                    changed = compare(s1, s2, row, nextRow);
+//                }
+//            }
+//        }
+//        print("Table sorted by " + sortColumn);
+//        printTable();
+//        return true;
+//    }
+//
+//    private boolean compare(String t1, String t2, int row, int nextRow) {
+//        try {
+//            double d1 = Double.parseDouble(t1);
+//            double d2 = Double.parseDouble(t2);
+//            return compareD(d1, d2, row, nextRow);
+//        } catch (NumberFormatException e) {
+//            t1 = t1.toLowerCase();
+//            t2 = t2.toLowerCase();
+//            return compareS(t1, t2, row, nextRow);
+//        }
+//    }
+//
+//    private boolean compareD(Double d1, Double d2, int row, int nextRow) {
+//        int i = 0;
+//        boolean cont = true;
+////        print("Sorting Doubles");
+//        while (cont) {
+//            cont = false;
+//            if (d1 < d2) {
+//                return swap(row, nextRow);
+//            }
+//        }
+//        return false;
+//    }
+//
+//    private boolean compareS(String t1, String t2, int row, int nextRow) {
+//        int i = 0;
+//        boolean cont = true;
+////        print("Sorting Strings");
+//        while (cont) {
+//            cont = false;
+//            if (t1.charAt(i) > t2.charAt(i)) {
+//                return swap(row, nextRow);
+//            } else if (t1.charAt(i) == t2.charAt(i)) {
+//                cont = true;
+//                i++;
+//            }
+//        }
+//        return false;
+//    }
+//
+//    private boolean swap(int row, int nextRow) {
+////        print("Swapping...");
+//        Collections.swap((List) getTableData(), row, nextRow);
+//        return true;
+//    }
+//    //END of Sort Algorithm
 }
 

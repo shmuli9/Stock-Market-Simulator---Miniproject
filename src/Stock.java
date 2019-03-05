@@ -31,8 +31,8 @@ public class Stock implements Row{
     }
 
     public boolean updateStock(double price, double open, double high, double low) {
-        if ((low >= high) || (low > price) || (price > high)) {
-            System.out.println("updateStock: numbers dont make sense...");
+        if ((low > high) || (low > price) || (price > high)) {
+//            System.out.println("updateStock: numbers dont make sense...");
             return false;
         }
         this._price = price;
@@ -40,7 +40,6 @@ public class Stock implements Row{
         this._low = low;
         this._open = open;
         this._marketCap = this.sharesOutstanding * price;
-//        System.out.println("Stock: " + getSymbol() + " updated with new info...");
         return true;
     }
 

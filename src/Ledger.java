@@ -1,16 +1,27 @@
-public class Ledger extends Table {
-    private Trade[] trades;
+/***************************************
+ * This class defines the ledger, which records all transcations for a SimData object.
+ * Both buy and sell are represented.
+ */
 
+import java.util.ArrayList;
+
+public class Ledger extends Table {
+    private ArrayList<Trade> trades;
+
+    /***************
+     * Constructor
+     * @throws ClassNotFoundException
+     */
     public Ledger() throws ClassNotFoundException {
-        super(Class.forName(Trade.class.getName()));
-        setTrades(new Trade[0]);
+        super(Class.forName(Trade.class.getName())); //Autogenerate Table headings
+        initTrades();
     }
 
     public void addTrade(String symbol, int quantity, double averagePurchasePrice, boolean BuyOrSale) {
         Trade trade = new Trade(symbol, quantity, averagePurchasePrice, BuyOrSale);
-        resizeArray(1);
-        getTrades()[getTrades().length - 1] = trade;
-        updateTableData(getTrades());
+        getTrades().add(trade);
+
+        updateTableData(getTrades().toArray(new Trade[0]));
     }
 
     @Override
@@ -19,29 +30,12 @@ public class Ledger extends Table {
         super.printTable();
     }
 
-    private void resizeArray(int diff) {
-        Trade[] newTrade = new Trade[getTrades().length + diff];
-
-        if ((getTrades().length + diff) > 1) {
-            System.arraycopy(getTrades(), 0, newTrade, 0, getTrades().length);
-        }
-
-        setTrades(newTrade);
-    }
-
-//    private void updateTableData() {
-//        super.clear();
-//        for (Trade trade : getTrades()) {
-//            addRow(trade.toStringArr());
-//        }
-//    }
-
-    public Trade[] getTrades() {
+    public ArrayList<Trade> getTrades() {
         return trades;
     }
 
-    public void setTrades(Trade[] trades) {
-        this.trades = trades;
+    public void initTrades() {
+        this.trades = new ArrayList<Trade>();
     }
 }
 

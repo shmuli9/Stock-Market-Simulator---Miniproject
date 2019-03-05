@@ -40,7 +40,7 @@ class SimData {
         boolean success = false;
         int i = 0;
         while(!success){
-            print("addRandomStocks loop");
+//            print("addRandomStocks loop");
             price = randomWork(500, 1500);
             open = randomWork(500, 1500);
             high = randomWork(500, 1500);

@@ -11,7 +11,7 @@ class Market extends Table {
 
     @Override
     public void printTable() {
-        updateTableData(getStocks());
+//        updateTableData(getStocks());
         System.out.println("Stock Market");
         super.printTable();
     }
@@ -28,7 +28,7 @@ class Market extends Table {
      * @return status, true = success, false = failure
      */
     public boolean addStock(String name, String symbol, double price, double open, double high, double low, int numShares) {
-        System.out.println("addStock:");
+//        System.out.println("addStock:");
         if (getStocks() != null) {
             if (!checkForItem(symbol, "Symbol")) {  //if this stock hasnt been added, add now
                 Stock stock = new Stock(name, symbol, numShares);
@@ -75,13 +75,6 @@ class Market extends Table {
             return false;
         }
     }
-
-//    private void updateTableData() {
-//        super.clear();
-//        for (Stock stock : getStocks()) {
-//            addRow(stock.toStringArr());
-//        }
-//    }
 
     public static boolean searchStocks(String symbol) {
         for (int i = 0; i < getNumStocks(); i++) {

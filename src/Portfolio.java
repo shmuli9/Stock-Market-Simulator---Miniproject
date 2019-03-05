@@ -8,7 +8,6 @@ class Portfolio extends Table {
 
     @Override
     public void printTable() {
-//        updateTableData();
         System.out.println("Portfolio:");
         super.printTable();
     }
@@ -18,13 +17,6 @@ class Portfolio extends Table {
         numHoldings = 0;
         setLedger(new Ledger());
     }
-
-//    public void updateTableData() {
-//        clear();
-//        for (Holding holding : holdings()) {
-//            addRow(holding.toStringArr());
-//        }
-//    }
 
     /***
      * Buy stock, add to portfolio if not already there and  update if already owned
