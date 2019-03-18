@@ -9,48 +9,60 @@ import javax.swing.table.*;
  * GUI class provides a GUI for the Stock Market Simulation
  */
 public class GUI extends JPanel {
+    //Window and tabs
     private JFrame windowFrame;
     private JSplitPane splitLogPane;
     private JTabbedPane tabbedPane;
+
+    //Log section
+    private JTextArea textLog;
+    private JPanel logPanel;
+    private JLabel labelLog;
+    private JScrollPane scrollPaneLog;
+
+    //Stock market page
+    /*Containers*/
     private JPanel stockMarketPanel;
     private JSplitPane stockSplitPane;
     private JScrollPane scrollPaneStock;
     private JTable stockTable;
     private JPanel stockRightPane;
     private JLabel labelName;
-    private JTextField txtSimName;
+    /*Buttons*/
     private JButton btnStartSim;
     private JButton btnRefresh;
     private JButton btnSave;
-    private JPanel portfolioPanel;
-    private JSplitPane stockSplitPane2;
-    private JScrollPane scrollPaneStock2;
-    private JTable portfolioTable;
-    private JPanel portfolioRightPane;
     private JButton btnExec;
-    private JLabel labelNumShares;
-    private JTextField txtNumShares;
-    private JPanel ledgerPanel;
-    private JScrollPane scrollPaneLedger;
-    private JTable ledgerTable;
-    private JPanel logPanel;
-    private JLabel labelLog;
-    private JScrollPane scrollPaneLog;
-    private JTextArea textLog;
-    private ActionListener ALbtnStartSim;
-    private ActionListener ALbtnRefresh;
-    private ActionListener ALbtnSave;
-    private ActionListener ALbtnExec;
     private ButtonGroup simRadioGroup;
     private ButtonGroup simTradeGroup;
     private JRadioButton radioFile;
     private JRadioButton radioGen;
     private JRadioButton radioBuy;
     private JRadioButton radioSell;
+    private ActionListener ALbtnStartSim;
+    private ActionListener ALbtnRefresh;
+    private ActionListener ALbtnSave;
+    private ActionListener ALbtnExec;
+    /*TextAreas*/
+    private JTextField txtNumShares;
+    private JTextField txtSimName;
+    private JLabel labelNumShares;
     private JLabel labelSelStock;
     private JTextField txtStockName;
+
+    //Portfolio page
+    private JTable portfolioTable;
+    private JPanel portfolioRightPane;
+    private JPanel portfolioPanel;
+    private JSplitPane stockSplitPane2;
+    private JScrollPane scrollPaneStock2;
+
+    //Ledger page
+    private JPanel ledgerPanel;
+    private JScrollPane scrollPaneLedger;
+    private JTable ledgerTable;
+
     private SimData sim;
-    private int selectedRow;
 
     public GUI() {
         initListeners();
@@ -243,23 +255,7 @@ public class GUI extends JPanel {
 
         //ledgerTable
         ledgerTable.setColumnSelectionAllowed(true);
-        ledgerTable.setModel(new DefaultTableModel(
-                new Object[][]{
-                        {null, null, null, null}
-                },
-                new String[]{
-                        "Name", "Symbol", "Price", "Open"
-                }
-        ) {
-            Class<?>[] columnTypes = new Class<?>[]{
-                    String.class, String.class, Double.class, Double.class
-            };
-
-            @Override
-            public Class<?> getColumnClass(int columnIndex) {
-                return columnTypes[columnIndex];
-            }
-        });
+        ledgerTable.setModel(new DefaultTableModel(new Object[][]{{null, null, null, null}}, new String[]{"Name", "Symbol", "Price", "Open"}));
         scrollPaneLedger.setViewportView(ledgerTable);
         ledgerPanel.add(scrollPaneLedger);
         tabbedPane.addTab("Ledger", ledgerPanel);
@@ -283,6 +279,7 @@ public class GUI extends JPanel {
         windowFrame.setSize(844, 587);
         windowFrame.setLocationRelativeTo(windowFrame.getOwner());
         windowFrame.setVisible(true);
+        windowFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     }
 
     private void initListeners() {
@@ -410,7 +407,6 @@ public class GUI extends JPanel {
                 addListSelectionListener(new ListSelectionListener() {
                                              public void valueChanged(ListSelectionEvent event) {
                                                  if (stockTable.getSelectedRow() != -1) {
-                                                     selectedRow = stockTable.getSelectedRow();
                                                      rowSelected();
                                                  } else {
                                                      nothingSelected();
@@ -438,7 +434,9 @@ public class GUI extends JPanel {
     }
 
     private void simStarted(String msg) {
-        printLog("Simulation started - " + msg);
+        printLog("Welcome, " + sim.getPlayerName() + ". Simulation started - " + msg);
+        printLog("Select stocks from the stock market or refresh the prices by pressing the Refresh Button");
+        printLog("To purchase a stock, select it in the table, enter the number you would like to buy or sell in \n the right hand section and press execute");
         btnStartSim.setEnabled(false);
         radioFile.setEnabled(false);
         radioGen.setEnabled(false);
