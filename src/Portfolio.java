@@ -1,10 +1,10 @@
+import java.io.IOException;
+import java.util.ArrayList;
+
 class Portfolio extends Table {
     private Ledger trades;
-    private Holding[] holdings; //rows of the table
-    private int oldNum;
-    private int numHoldings;
+    private ArrayList<Holding> holdings;
     private double totalCurrVal;
-    private double performance; // % change of portfolio
 
     @Override
     public void printTable() {
@@ -14,8 +14,40 @@ class Portfolio extends Table {
 
     public Portfolio() throws ClassNotFoundException {
         super(Class.forName(Holding.class.getName()));
-        numHoldings = 0;
         setLedger(new Ledger());
+    }
+
+
+    /************
+     * Loads saved file data from portf.text to repopulate the Portfolio table
+     * and from ledger.txt to repopulate the Ledger table
+     * @return
+     */
+    protected boolean loadFromFile() {
+        try {
+            initHoldings();
+            for (ArrayList<String> row : readFile("portf")) {
+                String symbol = row.get(0);
+                int quantity = Integer.parseInt(row.get(1));
+                double averagePurchasePrice = Double.parseDouble(row.get(2));
+
+                getHoldings().add(new Holding(symbol, averagePurchasePrice, quantity));
+            }
+            updateTableData(getHoldings());
+
+            for (ArrayList<String> row : readFile("ledger")) {
+                String symbol = row.get(0);
+                int quantity = Integer.parseInt(row.get(1));
+                double price = Double.parseDouble(row.get(2));
+                boolean BuyOrSale = row.get(4).equalsIgnoreCase("Buy");
+
+                getLedger().addTrade(symbol, quantity, price, BuyOrSale);
+            }
+
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
     }
 
     /***
@@ -32,18 +64,20 @@ class Portfolio extends Table {
         }
 
         if (quantity > 0) {
-            if (holdings() != null) {
+            if (getHoldings() != null) {
                 if (!checkForItem(stockSym, "Symbol")) {  //if this stock hasn't been purchased before then buy as new
                     Holding purchase = new Holding(stockSym, stockPrice, quantity);
-                    resizeArray(1)[oldNum] = purchase;
+                    getHoldings().add(purchase);
                 } else {                                    //else update quantity, and average price
                     findHolding(stockSym).update(stockPrice, quantity);
                 }
-            } else { //holdings was null, so needs to be initialised here
-                resizeArray(1)[0] = new Holding(stockSym, stockPrice, quantity);
+            } else { //getHoldings was null, so needs to be initialised here
+                initHoldings();
+                getHoldings().add(new Holding(stockSym, stockPrice, quantity));
             }
-            getLedger().addTrade(stockSym, quantity, stockPrice, true);
-            updateTableData(holdings());
+
+            getLedger().addTrade(stockSym, quantity, stockPrice, true); //add trade to ledger
+            updateTableData(getHoldings());
             return true;
         } else {
             print("Please enter a quantity greater than 0.");
@@ -65,12 +99,12 @@ class Portfolio extends Table {
             if (quantity < currQty) {
                 thisHolding.update(currprice, -quantity); //1. reduce quantity of owned 2. remove entirley
                 getLedger().addTrade(stockSym, quantity, currprice, false);
-                updateTableData(holdings());
+                updateTableData(getHoldings());
                 return true;
             } else if (quantity == currQty) {
-                removeHolding(stockSym);
+                getHoldings().remove(findHolding(stockSym));
                 getLedger().addTrade(stockSym, quantity, currprice, false);
-                updateTableData(holdings());
+                updateTableData(getHoldings());
                 return true;
             } else {
                 print("You do not own enough " + stockSym + " stock to sell " + quantity + " shares");
@@ -81,57 +115,30 @@ class Portfolio extends Table {
         return false;
     }
 
-    private Holding[] resizeArray(int diff) {
-        Holding[] newHoldings = new Holding[getNumHoldings() + diff];
-
-        if ((getNumHoldings() + diff) > 1) {
-            System.arraycopy(holdings(), 0, newHoldings, 0, getNumHoldings());
-        }
-
-        setHoldings(newHoldings);
-        oldNum = getNumHoldings();
-        changeNumHoldings(diff);
-        return newHoldings;
-    }
-
+    /************
+     * Returns Holding object (or reference to it at least)
+     * @param symbol
+     * @return
+     */
     private Holding findHolding(String symbol) {
         for (int i = 0; i < getNumHoldings(); i++) {
-            if (holdings()[i].toStringArr()[0].equals(symbol)) {
-                return holdings()[i];
+            if (getHoldings().get(i).getSymbol().equals(symbol)) {
+                return getHoldings().get(i);
             }
         }
         return null;
     }
 
-    private void removeHolding(String symbol) {
-        // todo fix this, when there are two holdings, and one is sold completely, it fails
-        //  d either with array index out of bounds in the for loop below, or with a null
-        //  pointer exception in updateTableData(), in the for loop there
-        int numHoldings = getNumHoldings();
-        print("numHoldings: " + numHoldings);
-
-        for (int i = 0; i < numHoldings /*&& holdings()[i].toStringArr()[0].equals(symbol)*/; i++) {
-            if (holdings()[i].toStringArr()[0].equals(symbol)) {
-                holdings()[i] = holdings()[numHoldings - 1];
-                resizeArray(-1);
-            }
-        }
-    }
-
     private int getNumHoldings() {
-        return this.numHoldings;
+        return this.holdings.size();
     }
 
-    private void changeNumHoldings(int diff) {
-        this.numHoldings += diff;
-    }
-
-    private Holding[] holdings() {
+    private ArrayList<Holding> getHoldings() {
         return this.holdings;
     }
 
-    private void setHoldings(Holding[] h) {
-        this.holdings = h;
+    private void initHoldings() {
+        this.holdings = new ArrayList<Holding>();
     }
 
     private void print(String msg) {

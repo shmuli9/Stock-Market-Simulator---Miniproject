@@ -1,3 +1,8 @@
+/**************
+ * This is a Utility class. It contains
+ * classes to validate user input
+ */
+
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -55,12 +60,6 @@ public class SM {
 
     private static boolean isValid(String inp, String type) {
         return ((isInt(inp) && type.equals(INT)) || (isDouble(inp) && type.equals(DOUBLE)) || (!isDouble(inp) && type.equals(STR)));
-//        if ((isInt(inp) && type.equals(INT)) || (isDouble(inp) && type.equals(DOUBLE)) || (!isDouble(inp) && type.equals(STR))) {
-//            return true;
-//        } else {
-//            //System.out.println("Invalid input, please enter a " + type);
-//            return false;
-//        }
     }
 
     private static boolean isInt(String inp) {
@@ -78,6 +77,15 @@ public class SM {
             return true;
         } catch (NumberFormatException e) {
             return false;
+        }
+    }
+
+    public static void print2darray(String[][] arr) {
+        System.out.println("Printing array");
+        for (int rowNum = 0; rowNum < arr.length; rowNum++) {    //i counts rows (0th row is column names)
+            for (int col = 0; col < arr[0].length; col++) { //col counts columns (0th column is first logical column)
+                System.out.println(arr[rowNum][col]);
+            }
         }
     }
 

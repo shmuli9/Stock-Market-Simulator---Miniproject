@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -142,6 +143,7 @@ class TableTest {
     }
 
     private void print2darray(String[][] arr) {
+        System.out.println("Printing array");
         for (int rowNum = 0; rowNum < arr.length; rowNum++) {    //i counts rows (0th row is column names)
             for (int col = 0; col < arr[0].length; col++) { //col counts columns (0th column is first logical column)
                 System.out.println(arr[rowNum][col]);
@@ -150,18 +152,37 @@ class TableTest {
     }
 
     @Test
-    void checkForItem() {
-
-    }
-
-    @Test
     void getTableData() {
         print2darray(t1.toArray());
         print2darray(t2.toArray());
     }
 
-    @Test
-    void testGenColumns() {
 
+    @Test
+    void saveToFile() {
+        try {
+            t3.saveToFile("test");
+            System.out.println("Successful write");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void testReadFile() {
+        String[][] origRows= {};
+        String[][] readRows = {};
+        try {
+            origRows = Table.ArrayListto2DArray(t3.getTableRows());
+            readRows = Table.ArrayListto2DArray(t3.readFile("test"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Orginal");
+        print2darray(origRows);
+        System.out.println("Read from file");
+        print2darray(readRows);
+
+        assertArrayEquals(origRows, readRows);
     }
 }

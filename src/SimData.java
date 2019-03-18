@@ -1,9 +1,13 @@
+import java.io.IOException;
 import java.util.Random;
 
 /***
  * Class SimData : Author: Shmuel Margulies, 16/01/19
  *
  * This is an abstract data type to carry all info for a player on StockMarketSim
+ * This class is also responsible for loading data into the stock market,
+ * either randomly or by reading from a file. It also controls the save
+ * to file functionality
  */
 class SimData {
     private Portfolio portfolio;
@@ -11,15 +15,31 @@ class SimData {
     private String playerName;
     private double funds;
 
-    public SimData(String playerName) {
+    public SimData(String playerName, boolean loadFromFile) {
         try {
             setPortfolio(new Portfolio());
             setMarket(new Market());
-            genRandomStocks(4);
         } catch (ClassNotFoundException e) {
             print(e.toString());
         }
+
+        if (loadFromFile) {
+            getMarket().loadFromFile();
+            getPortfolio().loadFromFile();
+        } else {
+            genRandomStocks(4);
+        }
         setPlayerName(playerName);
+    }
+
+    protected void saveToFile() {
+        try {
+            getMarket().saveToFile("stocks");
+            getPortfolio().saveToFile("portf");
+            getPortfolio().getLedger().saveToFile("ledger");
+        } catch (IOException e) {
+            print(e.toString());
+        }
     }
 
     private void genRandomStocks(int numStocks) {
@@ -39,7 +59,7 @@ class SimData {
 
         boolean success = false;
         int i = 0;
-        while(!success){
+        while (!success) {
 //            print("addRandomStocks loop");
             price = randomWork(500, 1500);
             open = randomWork(500, 1500);

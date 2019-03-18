@@ -9,11 +9,10 @@ public class Stock implements Row{
     private double _marketCap;
 
 
-    public Stock(String name, String symbol, /*double price, double open, double high, double low,*/ int numShares) {
+    public Stock(String name, String symbol, int numShares) {
         this._name = name;
         this._symbol = symbol;
         this.sharesOutstanding = numShares;
-        //updateStock(price, open, high, low);
     }
 
     public String[] toStringArr() {
@@ -32,9 +31,9 @@ public class Stock implements Row{
 
     public boolean updateStock(double price, double open, double high, double low) {
         if ((low > high) || (low > price) || (price > high)) {
-//            System.out.println("updateStock: numbers dont make sense...");
             return false;
         }
+
         this._price = price;
         this._high = high;
         this._low = low;

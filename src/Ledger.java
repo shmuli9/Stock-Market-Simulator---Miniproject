@@ -1,8 +1,7 @@
 /***************************************
- * This class defines the ledger, which records all transcations for a SimData object.
+ * This class defines the ledger, which records all transactions for a SimData object.
  * Both buy and sell are represented.
  */
-
 import java.util.ArrayList;
 
 public class Ledger extends Table {

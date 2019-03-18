@@ -1,4 +1,4 @@
-//todo save table to file & sql integration (sqlite easiest)
+//todo sql integration (sqlite easiest)
 
 import javax.swing.*;
 import java.io.FileReader;
@@ -22,7 +22,8 @@ public class Table {
     private int actRow; //actual number of rows (including standard output, eg. row number)
     private ArrayList<ArrayList<String>> tableData; //2d string array //String[] represents a row of data, ArrayList<String[]> represents a table of data
     private int numDecPlaces = 2;
-    private static final String fileName = "file";
+    private Class<?> C;
+//    private static final String fileName = "file";
 
     /*Constructors*/
     public Table(String[] columnData) {
@@ -35,10 +36,24 @@ public class Table {
 
     public Table(Class<?> C) {
         setRows(0);
+        this.C = C;
         setColumns(genColumns(C).length);
 
         this.tableData = new ArrayList<>();
         this.tableData.add(genTableHeader(genColumns(C)));
+    }
+
+    public Table(Class<?> C, String fileName) {
+//        setRows(0);
+//        setColumns(genColumns(C).length);
+        try {
+            readFile(fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+//        this.tableData = new ArrayList<>();
+//        this.tableData.add(genTableHeader(genColumns(C)));
     }
     //END Constructors
 
@@ -166,8 +181,6 @@ public class Table {
         tableColumns.add("Row#");
         tableColumns.addAll(Arrays.asList(userColumns));
 
-        //System.arraycopy(userColumns, 0, tableColumns, 1, userColumns.length);
-
         return tableColumns;
     }
 
@@ -175,19 +188,72 @@ public class Table {
      * Allows Table subclasses to update TableData with Row interfaced objects
      * @param rows
      */
-    protected void updateTableData(Row[] rows) {
-        clear();
-        for (Row row : rows) {
-            addRow(row.toStringArr());
-        }
-    }
-
     protected void updateTableData(ArrayList<? extends Row> rows) {
         clear();
         for (Row row : rows) {
             addRow(row.toStringArr());
         }
     }
+
+    public void readToTable(String fileName) {
+        try {
+            String[][] fileRows = ArrayListto2DArray(readFile(fileName));
+            clear();
+            for (String[] row : fileRows) {
+                addRow(row);
+            }
+        } catch (IOException e) {
+            print("Error in file read: " + e.toString());
+        }
+    }
+
+    /*File IO*/
+    public void saveToFile(String fileName) throws IOException {
+        String outputLine = String.valueOf(getTableRows().get(0).size()) + "," + getTableRows().size() + ","/* + "\n"*/;
+
+        for (ArrayList<String> row : getTableRows()) {
+            for (int i = 0; i < row.size(); i++) {
+                outputLine += row.get(i) + ",";
+            }
+        }
+
+        PrintWriter saveFile = new PrintWriter(new FileWriter(fileName + ".txt")); // use a PrintWriter to save this data to a
+        // .txt file
+        saveFile.println(outputLine);
+        saveFile.close(); // close the connection to the file so other processes can access it
+    }
+
+    /**
+     * Reads table data from an external file
+     *
+     * @return
+     * @throws IOException
+     */
+    public ArrayList<ArrayList<String>> readFile(String fileName) throws IOException {
+        Scanner read = new Scanner(new FileReader(fileName + ".txt"));
+        String metaDelim = ",";
+
+        read.useDelimiter(Pattern.compile(metaDelim));
+        int numCols = Integer.parseInt(read.next());
+        int numRows = Integer.parseInt(read.next());
+
+        ArrayList<ArrayList<String>> tableData = new ArrayList<ArrayList<String>>();
+
+        for (int j = 0; j < numRows; j++) {
+            ArrayList<String> row = new ArrayList<String>();
+            for (int i = 0; i < numCols; i++) {
+                try {
+                    row.add(read.next());
+                } catch (NoSuchElementException e) {
+                }
+            }
+            tableData.add(row);
+        }
+        read.close();
+
+        return tableData;
+    }
+    //END File IO
 
     public boolean checkForItem(String searchKey, String searchColumn) {
         boolean found = false;
@@ -444,21 +510,25 @@ public class Table {
     //END print methods
 
     /*Utility Methods*/
+
     /********
      * Utility class that converts a two dimensional
      * ArrayList of type String into a String[][]
      */
     public static String[][] ArrayListto2DArray(ArrayList<ArrayList<String>> table) {
-        String[][] arrayTable = new String[table.size()][table.get(0).size()]; //first dimension is actRows, 2nd dimension is actCols
+        if (!table.isEmpty()) {
+            String[][] arrayTable = new String[table.size()][table.get(0).size()]; //first dimension is actRows, 2nd dimension is actCols
 
-        for (int i = 0; i < table.size(); i++) {
-            ArrayList<String> el = table.get(i);
-            for (int j = 0; j < el.size(); j++) {
-                String cell = el.get(j);
-                arrayTable[i][j] = cell;
+            for (int i = 0; i < table.size(); i++) {
+                ArrayList<String> el = table.get(i);
+                for (int j = 0; j < el.size(); j++) {
+                    String cell = el.get(j);
+                    arrayTable[i][j] = cell;
+                }
             }
+            return arrayTable;
         }
-        return arrayTable;
+        return null;
     }
 
     /************
@@ -469,8 +539,15 @@ public class Table {
         return ArrayListto2DArray(getTableData());
     }
 
+    protected String[][] rowsToArray() {
+        return ArrayListto2DArray(getTableRows());
+    }
+
+    protected String[] columnsNamesToArray() {
+        return genColumns(this.C);
+    }
+
     private boolean isNumber(String s) {
-        // todo fix somehow...
         try {
             Double.parseDouble(s.substring(0, s.length() - 3)); //substring necessary to remove % sign from percentages which still need rounding
             return true;
@@ -516,55 +593,9 @@ public class Table {
     }
     //END Utility
 
-    /*File IO*/
-    public void saveToFile() throws IOException {
-        int metaData = getColumns();
-        String outputLine = String.valueOf(metaData) + "\n";
-
-        for (ArrayList<String> row : getTableData()) {
-            for (int i = 1; i < row.size(); i++) {
-                outputLine += row.get(i) + "|";
-            }
-        }
-
-        PrintWriter saveFile = new PrintWriter(new FileWriter(fileName + ".txt")); // use a PrintWriter to save this data to a
-        // .txt file
-        saveFile.println(outputLine);
-        saveFile.close(); // close the connection to the file so other processes can access it
-    }
-
-    /**
-     * Reads table data from an external file
-     *
-     * @return
-     * @throws IOException
-     */
-    public static ArrayList<ArrayList<String>> readFile() throws IOException {
-        Scanner read = new Scanner(new FileReader(fileName + ".txt"));
-        String metaDelim = "\n";
-        read.useDelimiter(Pattern.compile(metaDelim));
-        int numCols = Integer.parseInt(read.next());
-
-        String delim = "|";
-        read.useDelimiter(Pattern.compile(delim));
-
-        ArrayList<ArrayList<String>> tableData = new ArrayList<ArrayList<String>>();
-
-        while (read.hasNext()) {
-            ArrayList<String> row = new ArrayList<String>();
-            for (int i = 0; i < numCols; i++) {
-                row.add(read.next());
-            }
-            tableData.add(row);
-        }
-        read.close();
-
-        return tableData;
-    }
-    //END File IO
 
     /*Getters and Setters*/
-    protected ArrayList<ArrayList<String>> getTableData() {
+    protected ArrayList<ArrayList<String>> getTableData() throws NullPointerException{
         if (!this.tableData.isEmpty()) {
             return this.tableData;
         }
@@ -633,6 +664,7 @@ public class Table {
         this.columns = columns;
         this.actCol = columns + 1;
     }
+
     //END Getter and Setters
     {
 //    /*********************************

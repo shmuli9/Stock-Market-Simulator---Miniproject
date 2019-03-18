@@ -1,4 +1,4 @@
-import java.io.IOException;
+import javax.swing.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Random;
@@ -10,26 +10,46 @@ public class StockMarket {
     final static String DOUBLE = SM.DOUBLE;
 
     public static void main(String[] args) {
-        menu();
-//        TEST();
+        if (args.length == 1) {
+            if (args[0].equalsIgnoreCase("gui")) {
+                guiInit();
+            } else {
+                cmdMenu();
+            }
+        } else {
+            String[] opt = {"GUI", "CMD"};
+            String inp = SM.printOptions("Would you like to run the simulator from a GUI or the CMD line?", opt, "q");
 
-        print("Goodbye!");
-
-        //todo make sure after every transaction stock prices update
+            if (inp.equalsIgnoreCase("g")) {
+                guiInit();
+            } else {
+                cmdMenu();
+            }
+        }
+//        print("Goodbye!");
+//        System.exit(0);
     }
 
-    public static void menu() {
-        Scanner in = new Scanner(System.in);
-        String input;
-        SimData sim = new SimData(SM.prompt("Please enter your name: ", STR));
-        String welc = "Hi, " + sim.getPlayerName() + ", Welcome to Stock Market Simulator 0.3a\nWhat would you like to do?";
-        String[] options = {"Portfolio", "Stock Market", "Ledger"};
-        input = SM.printOptions(welc, options, "Quit");
+    public static void guiInit() {
         try {
-            sim.getMarket().saveToFile();
-        } catch (IOException e) {
+            // Set System L&F
+            UIManager.setLookAndFeel(
+                    UIManager.getSystemLookAndFeelClassName());
+        } catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            // handle exception
         }
+        new GUI();
+    }
 
+    public static void cmdMenu() {
+        Scanner in = new Scanner(System.in);
+        String[] options = {"File", "New"};
+        String input = SM.printOptions("Would you like to load stocks from file, or generate new random stock info?", options, "Quit");
+        boolean load = input.equals("f");
+        SimData sim = new SimData(SM.prompt("Please enter your name: ", STR), load);
+        String welc = "Hi, " + sim.getPlayerName() + ", Welcome to Stock Market Simulator 0.3a\nWhat would you like to do?";
+        String[] options2 = {"Portfolio", "Stock Market", "Ledger"};
+        input = SM.printOptions(welc, options2, "Quit");
 
         while (!input.equals("q")) {
             switch (input) {
@@ -43,27 +63,26 @@ public class StockMarket {
                     input = ledgerView(in, sim);
                     break;
                 default:
-                    input = SM.printOptions(welc, options, "q");
+                    input = SM.printOptions(welc, options2, "q");
                     break;
             }
         }
     }
 
     public static String ledgerView(Scanner in, SimData sim) {
-        //sim.getPortfolio().getLedger().printTable();
         printTable(sim.getPortfolio().getLedger());
         return "c";
     }
 
     public static String stockmarketView(Scanner in, SimData sim) {
-        String[] valid = {"Refresh", "Sort", "Menu"};
+        String[] valid = {"Refresh", "Sort", "Preserve", "Menu"};
         String inp = "";
         String sortPref = "Market Cap";
 
         while (!inp.equals("q")) {
             sim.getMarket().sortTable(sortPref);
             printTable(sim.getMarket());
-            inp = SM.printOptions("Options:\nTo refresh stock prices type R\nTo sort, type S", valid, "q");
+            inp = SM.printOptions("Options:\nTo refresh stock prices type Refresh\nTo sort, type Sort\nOr to save the current simulation, type Preserve", valid, "q");
             switch (inp) {
                 case "r":
                     sim.updRandomStocks();
@@ -74,6 +93,9 @@ public class StockMarket {
                         return "q";
                     }
                     break;
+                case "p":
+                    sim.saveToFile();
+                    break;
                 case "m":
                     return "c";
                 default:
@@ -81,7 +103,6 @@ public class StockMarket {
             }
         }
         return "q";
-        //sim.updRandomStocks();
     }
 
     public static String portfolioView(Scanner in, SimData sim) {
@@ -90,49 +111,29 @@ public class StockMarket {
 
         while (!input.equals("q")) {
             printTable(sim.getPortfolio());
-            //sim.getPortfolio().printTable(/*sim.getPlayerName() + "'s portfolio"*/);
             input = SM.printOptions("What would you like to do?", options, "q");
 
             switch (input) {
                 case "b":
                     buy(in, sim);
-                    sim.updRandomStocks();
                     break;
                 case "s":
                     sell(in, sim);
-                    sim.updRandomStocks();
                     break;
                 case "l":
                     ledgerView(in, sim);
                     break;
                 case "m":
-                    //menu();
                     return "c";
                 default:
                     break;
             }
         }
         return "q";
-
-//        while (!input.equals("q")) {
-//            sim.getPortfolio().printTable(sim.getPlayerName() + "'s portfolio");
-//            print("To buy a stock press b, or to sell an existing holding press se");
-//            input = in.nextLine();
-//
-//            if (input.equals("b")) {
-//                buy(in, sim);
-//                sim.updRandomStocks();
-//            } else if (input.equals("se")) {
-//                sell(in, sim);
-//                sim.updRandomStocks();
-//            }
-//            print("To buy a stock press b, or to sell an existing holding press se");
-//            input = in.nextLine();
-//        }
     }
 
     public static void buy(Scanner in, SimData sim) {
-        String sym /*= in.nextLine()*/;
+        String sym;
         sym = SM.prompt("Enter the stock symbol that you would like to purchase:", STR);
 
         while (!Market.searchStocks(sym)) {
@@ -152,28 +153,12 @@ public class StockMarket {
             print("OK, purchase cancelled");
         } else {
             sim.getPortfolio().buyStock(sym, qty, Double.parseDouble(tprice));
-            //sim.getPortfolio().getLedger().printTable();
+            sim.updRandomStocks();
         }
-    }
-
-    public static Object menuItem(String msg, Scanner in, Class<?> type) {
-        print(msg);
-        String input = in.nextLine();
-
-        Class<?> x = type.getClass();/*? (() input) : null;*/
-        try {
-            return type.cast(input);
-        } catch (Error e) {
-            print(e.toString());
-            return "Not of type " + type;
-        }
-
-        //return input;
     }
 
     public static void sell(Scanner in, SimData sim) {
-        //print("Enter symbol of holding to sell");
-        String sym /*= in.nextLine()*/;
+        String sym;
         sym = SM.prompt("Enter the stock symbol that you would like to sell:", STR);
         String input = sym;
 
@@ -196,25 +181,13 @@ public class StockMarket {
             print("OK, sale executed");
         } else {
             sim.getPortfolio().sellStock(sym, amt2sell, salePrice);
-            //sim.getPortfolio().getLedger().printTable();
+            sim.updRandomStocks();
         }
-//        while (!input.equals("q")) {
-//            if (sim.getPortfolio().checkForItem(sym, "Symbol")) {
-//                double amt = Double.parseDouble(sim.getPortfolio().lookupCell(sym, "Symbol", "Quantity"));
-//                print("You own " + amt + " shares of this stock. How many would you like to sell?");
-//                input = in.nextLine();
-//                if (Integer.parseInt(input) <= amt) {
-//                    sim.getPortfolio().sellStock(sym, Integer.parseInt(input));
-//                    input = "q";
-//                } else {
-//                    print("Please enter an amount, no more than " + amt);
-//                }
-//            } else {
-//                print("You do not own shares from " + input);
-//                print("Enter symbol of holding to sell");
-//                sym = in.nextLine();
-//            }
-//        }
+
+    }
+
+    public static void printTable(Table t) {
+        t.printTable();
     }
 
     public static void print(String msg) {
@@ -225,30 +198,6 @@ public class StockMarket {
         BigDecimal roundedNum = new BigDecimal(d).setScale(2, RoundingMode.HALF_UP);
         return roundedNum.toString();
     }
-
-//    public static boolean isQ(String s){
-//        if (isQ){
-//            return true;
-//        }
-//        return false;
-//    }
-
-//    public static void TESTS() {
-//        String[] cols = {"Col1", "Col2", "Col3"};
-//        Table testTable = new Table(cols);
-//        //testTable.printTable();
-//
-//        String[] newRow = {"data1", "data2", "data3"};
-//        testTable.addRow(newRow);
-//
-//        String[][] newRows = {{"data4", "dat        a5", "data6"}, {"rows      1", "rows2", "rows3"}};
-//        testTable.addMultRows(newRows);
-//        testTable.printTable("TEST");
-//        //testTable.printColumn("Col2");
-//
-//        String[] cols2 = {"ID", "Name", "Date"};
-//        Table testTable2 = new Table(cols2);
-//    }
 
     /***********************************
      * Limit defines max+1 number returned (from 0) ie if limit equals 2, possible
@@ -269,9 +218,7 @@ public class StockMarket {
         return randomNumber;
     }
 
-    public static void printTable(Table t) {
-        t.printTable();
-    }
+
 }
 
 

@@ -1,7 +1,7 @@
+import java.io.IOException;
 import java.util.ArrayList;
 
 class Market extends Table {
-//    private static Stock[] stocks;
     private static ArrayList<Stock> stocks;
 
     public Market() throws ClassNotFoundException {
@@ -12,6 +12,28 @@ class Market extends Table {
     public void printTable() {
         System.out.println("Stock Market");
         super.printTable();
+    }
+
+    protected boolean loadFromFile() {
+        try {
+            return addMultStocks(readFile("stocks"));
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private boolean addMultStocks(ArrayList<ArrayList<String>> rowData) {
+        for (ArrayList<String> row : rowData) {
+            String name = row.get(0);
+            String symbol = row.get(1);
+            double price = Double.parseDouble(row.get(2));
+            double open = Double.parseDouble(row.get(3));
+            double high = Double.parseDouble(row.get(4));
+            double low = Double.parseDouble(row.get(5));
+            int numShares = (int) (Double.parseDouble(row.get(6)) / price);
+            addStock(name, symbol, price, open, high, low, numShares);
+        }
+        return true;
     }
 
     /***
@@ -26,7 +48,6 @@ class Market extends Table {
      * @return status, true = success, false = failure
      */
     public boolean addStock(String name, String symbol, double price, double open, double high, double low, int numShares) {
-//        System.out.println("addStock:");
         if (getStocks() != null) {
             if (!checkForItem(symbol, "Symbol")) {  //if this stock hasnt been added, add now
                 Stock stock = new Stock(name, symbol, numShares);
@@ -54,7 +75,6 @@ class Market extends Table {
      * @return status
      */
     public boolean updStock(String symbol, double price, double open, double high, double low) {
-//        System.out.println("updStock:");
         if (getStocks() != null) {
             if (checkForItem(symbol, "Symbol")) {  //if this stock already exists then update info for it
                 boolean success = findStocks(symbol).updateStock(price, open, high, low);
@@ -74,10 +94,8 @@ class Market extends Table {
 
     public static boolean searchStocks(String symbol) {
         for (int i = 0; i < getNumStocks(); i++) {
-//            if (getStocks()[i].toStringArr()[1].equalsIgnoreCase(symbol)) {
-//                return true;
-//            }
-            if (getStocks().get(i).getSymbol().equalsIgnoreCase(symbol)){
+
+            if (getStocks().get(i).getSymbol().equalsIgnoreCase(symbol)) {
                 return true;
             }
         }
@@ -86,10 +104,8 @@ class Market extends Table {
 
     public static Stock findStocks(String symbol) {
         for (int i = 0; i < getNumStocks(); i++) {
-//            if (getStocks()[i].toStringArr()[1].equalsIgnoreCase(symbol)) {
-//                return getStocks()[i];
-//            }
-            if (getStocks().get(i).getSymbol().equalsIgnoreCase(symbol)){
+
+            if (getStocks().get(i).getSymbol().equalsIgnoreCase(symbol)) {
                 return getStocks().get(i);
             }
         }

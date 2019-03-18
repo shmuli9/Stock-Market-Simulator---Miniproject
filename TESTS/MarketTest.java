@@ -35,8 +35,6 @@ class MarketTest {
 
 //        m1.sortTable("Market Cap");
 //        assertArrayEquals(arrlisttoArr(m1.getTableRows()), rowssortedbyMC);
-
-
     }
 
     private String[][] arrlisttoArr(ArrayList<ArrayList<String>> tableToSort) {
